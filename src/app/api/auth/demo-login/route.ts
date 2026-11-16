@@ -1,19 +1,22 @@
+import { readObject } from "@/lib/request-body";
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { signToken, hashPassword, setAuthCookie, DEMO_ACCOUNTS } from "@/lib/auth";
+import { signToken, hashPassword, setAuthCookie, DEMO_ACCOUNTS, demoEnabled } from "@/lib/auth";
 
 export async function POST(req: NextRequest) {
   try {
-    if (process.env.NEXT_PUBLIC_DEMO_MODE === "false" || process.env.DEMO_MODE === "false") {
+    if (!demoEnabled()) {
       return NextResponse.json(
         { error: "Demo login is disabled in this environment." },
         { status: 403 }
       );
     }
 
-    const { role } = await req.json();
+    const body = await readObject(req);
+    if (!body) return NextResponse.json({ error: "Expected a JSON object." }, { status: 400 });
+    const { role } = body;
 
-    if (!role || !["STUDENT", "ORGANIZER", "CAMPUS_MANAGER"].includes(role)) {
+    if (typeof role !== "string" || !["STUDENT", "ORGANIZER", "CAMPUS_MANAGER"].includes(role)) {
       return NextResponse.json(
         { error: "Invalid role specified for demo login." },
         { status: 400 }

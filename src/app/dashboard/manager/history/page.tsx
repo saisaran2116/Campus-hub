@@ -13,6 +13,7 @@ import {
   Filter,
 } from "lucide-react";
 import CampusVerifiedBadge from "@/components/CampusVerifiedBadge";
+import EventPhoto from "@/components/EventPhoto";
 import { useAuth } from "@/context/AuthContext";
 
 export default function ManagerAuditHistoryPage() {
@@ -46,7 +47,7 @@ export default function ManagerAuditHistoryPage() {
       <div className="max-w-md mx-auto px-4 py-24 text-center">
         <div className="p-8 rounded-3xl bg-white dark:bg-kalvium-dark-surface border border-kalvium-border dark:border-kalvium-dark-border shadow-soft-sm text-center">
           <ShieldCheck className="w-10 h-10 text-kalvium-success mx-auto mb-3" />
-          <h2 className="text-xl font-display font-black text-kalvium-ink dark:text-kalvium-dark-ink mb-2">Access Restricted</h2>
+          <h2 className="text-balance text-xl font-display font-bold text-kalvium-ink dark:text-kalvium-dark-ink mb-2">Access Restricted</h2>
           <p className="text-xs text-kalvium-muted dark:text-kalvium-dark-muted mb-6">
             Access to the immutable audit trail is restricted to Campus Managers.
           </p>
@@ -81,7 +82,7 @@ export default function ManagerAuditHistoryPage() {
           <span className="text-xs font-sans uppercase tracking-widest text-kalvium-success font-bold bg-kalvium-success-tint px-3 py-1 rounded-full border border-kalvium-success-border">
             Immutable Audit Trail
           </span>
-          <h1 className="text-3xl font-display font-black text-kalvium-ink dark:text-kalvium-dark-ink tracking-tight mt-1">
+          <h1 className="text-balance text-3xl font-display font-bold text-kalvium-ink dark:text-kalvium-dark-ink mt-1">
             Campus Verification History
           </h1>
           <p className="text-xs sm:text-sm text-kalvium-muted dark:text-kalvium-dark-muted mt-1">
@@ -137,8 +138,7 @@ export default function ManagerAuditHistoryPage() {
             >
               <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
                 <div className="flex items-start gap-4">
-                  <img
-                    src={entry.event.posterUrl}
+                  <EventPhoto posterUrl={entry.event.posterUrl} category={entry.event.category}
                     alt={entry.event.title}
                     className="w-16 h-16 rounded-xl object-cover bg-kalvium-surface-alt dark:bg-kalvium-dark-surface-alt shrink-0 border border-kalvium-border dark:border-kalvium-dark-border"
                   />
@@ -161,7 +161,7 @@ export default function ManagerAuditHistoryPage() {
                       </span>
                     </div>
 
-                    <h3 className="text-base font-bold text-kalvium-ink dark:text-kalvium-dark-ink mb-1">{entry.event.title}</h3>
+                    <h3 className="text-balance text-base font-bold text-kalvium-ink dark:text-kalvium-dark-ink mb-1">{entry.event.title}</h3>
                     <p className="text-xs text-kalvium-muted dark:text-kalvium-dark-muted">
                       Event Date: {entry.event.date} • Venue: {entry.event.venue}
                     </p>

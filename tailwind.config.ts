@@ -1,4 +1,5 @@
 import type { Config } from "tailwindcss";
+import daisyui from "daisyui";
 
 const config: Config = {
   content: [
@@ -15,11 +16,17 @@ const config: Config = {
           "dark-ink": "#FFFFFF",
           muted: "#777777",
           "dark-muted": "#AAAAAA",
+          bg: "#F7F7F5",
+          "dark-bg": "#111111",
+          surface: "#FFFFFF",
           "surface-alt": "#F7F7F5",
           "dark-surface": "#111111",
           "dark-surface-alt": "#222222",
           border: "#D6D6D2",
           "dark-border": "#444444",
+          "dark-coral-tint": "#3B211D",
+          "dark-warning-tint": "#382B14",
+          "dark-success-tint": "#103026",
           coral: {
             DEFAULT: "#EF321F",
             hover: "#D13019",
@@ -63,8 +70,8 @@ const config: Config = {
         },
       },
       fontFamily: {
-        sans: ["var(--font-outfit)", "Outfit", "system-ui", "sans-serif"],
-        display: ["var(--font-outfit)", "Outfit", "system-ui", "sans-serif"],
+        sans: ["Outfit Variable", "system-ui", "sans-serif"],
+        display: ["Outfit Variable", "system-ui", "sans-serif"],
         mono: ["var(--font-mono)", "JetBrains Mono", "SFMono-Regular", "Menlo", "monospace"],
       },
       fontSize: {
@@ -74,6 +81,8 @@ const config: Config = {
         "display-md": ["clamp(1.5rem, 3vw, 2.25rem)", { lineHeight: "1.1", letterSpacing: "-0.02em" }],
       },
       boxShadow: {
+        "kalvium-sm": "0 1px 3px rgb(17 17 17 / 0.10)",
+        "kalvium-md": "0 3px 10px rgb(17 17 17 / 0.12)",
         "bauhaus-sm": "4px 4px 0px 0px #121212",
         "bauhaus-md": "6px 6px 0px 0px #121212",
         "bauhaus-lg": "8px 8px 0px 0px #121212",
@@ -102,6 +111,6 @@ const config: Config = {
       },
     },
   },
-  plugins: [],
+  plugins: [daisyui],
 };
 export default config;

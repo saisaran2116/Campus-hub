@@ -1,3 +1,7 @@
+import { z } from "zod";
+import { Prisma } from "@prisma/client";
+import { getRedis } from "@/lib/redis";
+import { formatLocalDate } from "@/lib/time";
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/auth";
@@ -8,22 +12,27 @@ export async function POST(req: NextRequest) {
     if ("errorResponse" in authResult) return authResult.errorResponse;
 
     const { user } = authResult;
-    const body = await req.json();
-
-    const {
-      eventId,
-      action, // "APPROVE" | "DECLINE"
-      corrections, // Optional edits made by manager
-      reason,      // Decline reason
-      customNotes, // Custom feedback notes
-    } = body;
-
-    if (!eventId || !action || !["APPROVE", "DECLINE"].includes(action)) {
-      return NextResponse.json(
-        { error: "Event ID and a valid action ('APPROVE' or 'DECLINE') are required." },
-        { status: 400 }
-      );
+    const decision = z.object({
+      eventId: z.string().min(1),
+      action: z.enum(["APPROVE", "DECLINE"]),
+      corrections: z.object({
+        title: z.string().trim().max(240).optional(),
+        date: z.union([z.literal(""), z.string().date()]).optional(),
+        startTime: z.string().trim().max(30).optional(),
+        endTime: z.string().trim().max(30).optional(),
+        venue: z.string().trim().max(240).optional(),
+        organizerName: z.string().trim().max(240).optional(),
+        category: z.string().trim().max(240).optional(),
+        description: z.string().trim().max(5000).optional(),
+        summary: z.string().trim().max(5000).optional(),
+      }).optional(),
+      reason: z.string().trim().max(500).nullish(),
+      customNotes: z.string().trim().max(5000).nullish(),
+    }).safeParse(await req.json().catch(() => null));
+    if (!decision.success) {
+      return NextResponse.json({ error: "Invalid review decision." }, { status: 400 });
     }
+    const { eventId, action, corrections, reason, customNotes } = decision.data;
 
     const event = await prisma.event.findUnique({
       where: { id: eventId },
@@ -39,7 +48,7 @@ export async function POST(req: NextRequest) {
         {
           error: `Event cannot be processed because its status is already '${event.status}'. Only PENDING events can be reviewed.`,
         },
-        { status: 400 }
+        { status: 409 }
       );
     }
 
@@ -47,7 +56,7 @@ export async function POST(req: NextRequest) {
 
     if (action === "APPROVE") {
       // Apply manager corrections if any
-      const updateData: any = {
+      const updateData: Prisma.EventUncheckedUpdateInput = {
         status: "APPROVED",
         verifiedById: user.userId,
         verifiedAt: now,
@@ -69,7 +78,7 @@ export async function POST(req: NextRequest) {
 
       const [updated] = await prisma.$transaction([
         prisma.event.update({
-          where: { id: eventId },
+          where: { id: eventId, status: "PENDING" },
           data: updateData,
         }),
         prisma.approvalHistory.create({
@@ -83,6 +92,12 @@ export async function POST(req: NextRequest) {
         }),
       ]);
 
+      const redis = await getRedis();
+      await redis?.multi()
+        .del(`campus:upcoming:${formatLocalDate(new Date())}`)
+        .publish("campus:catalogue-changed", "approved")
+        .exec().catch(() => undefined);
+
       return NextResponse.json({
         success: true,
         message: "Event approved successfully. Stamped with ✓ CAMPUS VERIFIED.",
@@ -94,7 +109,7 @@ export async function POST(req: NextRequest) {
 
       const [updated] = await prisma.$transaction([
         prisma.event.update({
-          where: { id: eventId },
+          where: { id: eventId, status: "PENDING" },
           data: {
             status: "DECLINED",
             declineReason: declineReasonText,
@@ -122,6 +137,9 @@ export async function POST(req: NextRequest) {
       });
     }
   } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2025") {
+      return NextResponse.json({ error: "This event has already been reviewed." }, { status: 409 });
+    }
     console.error("Manager verify action error:", error);
     return NextResponse.json(
       { error: "Failed to process verification decision." },

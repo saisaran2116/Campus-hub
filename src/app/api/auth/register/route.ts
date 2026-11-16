@@ -1,10 +1,14 @@
+import { readObject } from "@/lib/request-body";
 import { NextRequest, NextResponse } from "next/server";
+import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
-import { hashPassword, signToken, setAuthCookie } from "@/lib/auth";
+import { hashPassword, signToken, setAuthCookie, isDemoEmail } from "@/lib/auth";
 
 export async function POST(req: NextRequest) {
   try {
-    const { name, email, password, role } = await req.json();
+    const body = await readObject(req);
+    if (!body) return NextResponse.json({ error: "Expected a JSON object." }, { status: 400 });
+    const { name, email, password, role } = body;
 
     if (!name || typeof name !== "string" || name.trim().length === 0) {
       return NextResponse.json(
@@ -43,10 +47,10 @@ export async function POST(req: NextRequest) {
       where: { email: cleanEmail },
     });
 
-    if (existing) {
+    if (existing || isDemoEmail(cleanEmail)) {
       return NextResponse.json(
         { error: "An account with this email address already exists." },
-        { status: 400 }
+        { status: 409 }
       );
     }
 
@@ -57,7 +61,6 @@ export async function POST(req: NextRequest) {
         email: cleanEmail,
         password: hashedPassword,
         role: normalizedRole,
-        avatar: `https://api.dicebear.com/7.x/shapes/svg?seed=${encodeURIComponent(cleanEmail)}`,
       },
     });
 
@@ -78,12 +81,15 @@ export async function POST(req: NextRequest) {
         avatar: user.avatar,
       },
       token,
-    });
+    }, { status: 201 });
 
     setAuthCookie(response, token);
 
     return response;
   } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
+      return NextResponse.json({ error: "An account with this email already exists." }, { status: 409 });
+    }
     console.error("Registration error:", error);
     return NextResponse.json(
       { error: "Internal server error during registration." },

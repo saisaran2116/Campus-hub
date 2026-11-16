@@ -1,12 +1,15 @@
+import { readObject } from "@/lib/request-body";
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { comparePassword, signToken, setAuthCookie } from "@/lib/auth";
+import { comparePassword, signToken, setAuthCookie, demoEnabled, isDemoEmail } from "@/lib/auth";
 
 export async function POST(req: NextRequest) {
   try {
-    const { email, password } = await req.json();
+    const body = await readObject(req);
+    if (!body) return NextResponse.json({ error: "Expected a JSON object." }, { status: 400 });
+    const { email, password } = body;
 
-    if (!email || !password) {
+    if (typeof email !== "string" || typeof password !== "string" || !email || !password) {
       return NextResponse.json(
         { error: "Email and password are required." },
         { status: 400 }
@@ -17,7 +20,7 @@ export async function POST(req: NextRequest) {
       where: { email: email.trim().toLowerCase() },
     });
 
-    if (!user) {
+    if (!user || (!demoEnabled() && isDemoEmail(user.email))) {
       return NextResponse.json(
         { error: "Invalid email or password." },
         { status: 401 }

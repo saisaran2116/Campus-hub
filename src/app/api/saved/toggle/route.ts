@@ -1,3 +1,4 @@
+import { readObject } from "@/lib/request-body";
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/auth";
@@ -8,9 +9,11 @@ export async function POST(req: NextRequest) {
     if ("errorResponse" in authResult) return authResult.errorResponse;
 
     const { user } = authResult;
-    const { eventId } = await req.json();
+    const body = await readObject(req);
+    if (!body) return NextResponse.json({ error: "Expected a JSON object." }, { status: 400 });
+    const { eventId } = body;
 
-    if (!eventId) {
+    if (typeof eventId !== "string" || !eventId) {
       return NextResponse.json({ error: "Event ID is required." }, { status: 400 });
     }
 

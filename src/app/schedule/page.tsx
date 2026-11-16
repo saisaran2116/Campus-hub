@@ -66,7 +66,7 @@ export default function MySchedulePage() {
       <div className="max-w-md mx-auto px-4 py-24 text-center">
         <div className="bg-white dark:bg-kalvium-dark-surface p-8 rounded-3xl border border-kalvium-border dark:border-kalvium-dark-border shadow-kalvium-md">
           <Clock className="w-10 h-10 text-kalvium-coral mx-auto mb-3" />
-          <h2 className="font-display text-xl font-bold text-kalvium-text dark:text-kalvium-dark-text mb-2">My Schedule</h2>
+          <h2 className="text-balance font-display text-xl font-bold text-kalvium-ink dark:text-kalvium-dark-ink mb-2">My Schedule</h2>
           <p className="text-xs text-kalvium-muted dark:text-kalvium-dark-muted mb-6">
             Please sign in or select a demo role in the top evaluation bar to access your personal schedule and clash detector.
           </p>
@@ -90,20 +90,17 @@ export default function MySchedulePage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-10">
         <div>
-          <span className="text-xs font-sans uppercase tracking-widest text-[#E5391F] font-black bg-white px-4 py-1.5 rounded-full border-2 border-black shadow-[2px_2px_0px_0px_black]">
-            Personal Agenda
-          </span>
-          <h1 className="font-display text-5xl sm:text-6xl font-black text-black dark:text-white tracking-tighter uppercase mt-4 leading-none">
-            My schedule.
+          <h1 className="text-balance font-display text-5xl sm:text-6xl font-bold text-black dark:text-white mt-4 leading-none">
+            My schedule
           </h1>
           <p className="text-sm text-kalvium-muted dark:text-kalvium-dark-muted mt-1">
-            Chronological calendar of verified campus events with instant clash detection.
+            See your saved events and any times that overlap.
           </p>
         </div>
 
         <Link
           href="/events"
-          className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-white border-2 border-black hover:bg-black hover:text-white text-xs font-black uppercase tracking-widest text-black transition shrink-0 self-start sm:self-auto shadow-[4px_4px_0px_0px_black] active:translate-y-1 active:translate-x-1 active:shadow-none"
+          className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-white border-2 border-black hover:bg-black hover:text-white text-xs font-black uppercase tracking-widest text-black transition shrink-0 self-start sm:self-auto shadow-sm active:translate-y-1 active:translate-x-1 active:shadow-none"
         >
           <Compass size={16} className="text-[#E5391F]" />
           <span>Add Events</span>
@@ -118,10 +115,10 @@ export default function MySchedulePage() {
               <AlertTriangle size={20} className="animate-pulse" />
             </div>
             <div>
-              <h3 className="font-display text-sm font-bold text-kalvium-warning">
+              <h3 className="text-balance font-display text-sm font-bold text-kalvium-warning">
                 {conflictsCount} Schedule {conflictsCount === 1 ? "Conflict" : "Conflicts"} Detected
               </h3>
-              <p className="text-xs text-kalvium-text dark:text-kalvium-dark-text mt-1">
+              <p className="text-xs text-kalvium-ink dark:text-kalvium-dark-ink mt-1">
                 You have saved multiple overlapping events. Check the clash indicators below to avoid double-booking.
               </p>
             </div>
@@ -141,7 +138,7 @@ export default function MySchedulePage() {
       ) : totalSaved === 0 ? (
         <div className="bg-white dark:bg-kalvium-dark-surface py-20 text-center rounded-3xl p-8 max-w-xl mx-auto border border-kalvium-border dark:border-kalvium-dark-border shadow-kalvium-sm animate-fade-in">
           <CalendarX2 className="w-10 h-10 text-kalvium-muted mx-auto mb-3" />
-          <h3 className="font-display text-lg font-bold text-kalvium-text dark:text-kalvium-dark-text mb-1">Nothing saved yet</h3>
+          <h3 className="text-balance font-display text-lg font-bold text-kalvium-ink dark:text-kalvium-dark-ink mb-1">Nothing saved yet</h3>
           <p className="text-xs text-kalvium-muted dark:text-kalvium-dark-muted mb-6 max-w-sm mx-auto">
             Save an event from the discovery page and it will show up here, grouped chronologically with automatic clash warnings.
           </p>
@@ -160,7 +157,7 @@ export default function MySchedulePage() {
               <div className="sticky top-20 z-10 -mx-4 bg-kalvium-bg/90 dark:bg-kalvium-dark-bg/90 px-4 py-3 backdrop-blur sm:-mx-8 sm:px-8 border-b border-kalvium-border dark:border-kalvium-dark-border flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
                   <Flame size={16} className="text-kalvium-coral fill-kalvium-coral animate-pulse" />
-                  <h2 className="font-display text-lg font-bold text-kalvium-text dark:text-kalvium-dark-text">Starting Soon</h2>
+                  <h2 className="text-balance font-display text-lg font-bold text-kalvium-ink dark:text-kalvium-dark-ink">Starting Soon</h2>
                 </div>
                 <span className="text-xs font-sans text-kalvium-coral font-bold uppercase tracking-wider">{groups.startingSoon.length} events</span>
               </div>
@@ -179,7 +176,7 @@ export default function MySchedulePage() {
               <div className="sticky top-20 z-10 -mx-4 bg-kalvium-bg/90 dark:bg-kalvium-dark-bg/90 px-4 py-3 backdrop-blur sm:-mx-8 sm:px-8 border-b border-kalvium-border dark:border-kalvium-dark-border flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
                   <span className="h-2.5 w-2.5 rounded-full bg-kalvium-coral" />
-                  <h2 className="font-display text-lg font-bold text-kalvium-text dark:text-kalvium-dark-text">Today</h2>
+                  <h2 className="text-balance font-display text-lg font-bold text-kalvium-ink dark:text-kalvium-dark-ink">Today</h2>
                 </div>
                 <span className="text-xs font-sans text-kalvium-muted font-semibold">({groups.today.length})</span>
               </div>
@@ -197,7 +194,7 @@ export default function MySchedulePage() {
               <div className="sticky top-20 z-10 -mx-4 bg-kalvium-bg/90 dark:bg-kalvium-dark-bg/90 px-4 py-3 backdrop-blur sm:-mx-8 sm:px-8 border-b border-kalvium-border dark:border-kalvium-dark-border flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
                   <span className="h-2.5 w-2.5 rounded-full bg-kalvium-success" />
-                  <h2 className="font-display text-lg font-bold text-kalvium-text dark:text-kalvium-dark-text">Tomorrow</h2>
+                  <h2 className="text-balance font-display text-lg font-bold text-kalvium-ink dark:text-kalvium-dark-ink">Tomorrow</h2>
                 </div>
                 <span className="text-xs font-sans text-kalvium-muted font-semibold">({groups.tomorrow.length})</span>
               </div>
@@ -215,7 +212,7 @@ export default function MySchedulePage() {
               <div className="sticky top-20 z-10 -mx-4 bg-kalvium-bg/90 dark:bg-kalvium-dark-bg/90 px-4 py-3 backdrop-blur sm:-mx-8 sm:px-8 border-b border-kalvium-border dark:border-kalvium-dark-border flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
                   <span className="h-2.5 w-2.5 rounded-full bg-kalvium-muted" />
-                  <h2 className="font-display text-lg font-bold text-kalvium-text dark:text-kalvium-dark-text">Later & Upcoming</h2>
+                  <h2 className="text-balance font-display text-lg font-bold text-kalvium-ink dark:text-kalvium-dark-ink">Later & Upcoming</h2>
                 </div>
                 <span className="text-xs font-sans text-kalvium-muted font-semibold">({groups.upcoming.length})</span>
               </div>
@@ -245,10 +242,10 @@ function ScheduleItemCard({
     <TiltCard maxTilt={3} className="h-full">
       <div
         className={`p-6 rounded-3xl border-4 transition-all duration-300 relative flex flex-col justify-between h-full group ${event.hasClash
-            ? "border-[#FFB300] bg-white shadow-[8px_8px_0px_0px_#FFB300]"
+            ? "border-[#FFB300] bg-white shadow-sm"
             : isHighlight
-              ? "border-black bg-white shadow-[8px_8px_0px_0px_black]"
-              : "border-black bg-white hover:border-[#E5391F] hover:shadow-[8px_8px_0px_0px_#E5391F] shadow-[4px_4px_0px_0px_black]"
+              ? "border-black bg-white shadow-sm"
+              : "border-black bg-white hover:border-[#E5391F] hover:shadow-md shadow-sm"
           }`}
       >
         <div>
@@ -277,7 +274,7 @@ function ScheduleItemCard({
                 <AlertTriangle size={14} className="animate-pulse" />
                 <span>SCHEDULE CLASH</span>
               </div>
-              <p className="text-[11px] text-kalvium-text dark:text-kalvium-dark-text">
+              <p className="text-[11px] text-kalvium-ink dark:text-kalvium-dark-ink">
                 Overlaps with: <span className="font-semibold">{event.conflictDetails.conflictingEventTitle}</span> ({event.conflictDetails.overlapStr})
               </p>
             </div>
@@ -285,14 +282,14 @@ function ScheduleItemCard({
 
           {/* Title */}
           <Link href={`/events/${event.id}`}>
-            <h3 className="font-display text-xl font-black text-black group-hover:text-[#E5391F] transition-colors line-clamp-1 mb-2 uppercase tracking-tighter leading-none">
+            <h3 className="text-balance font-display text-xl font-bold text-black group-hover:text-[#E5391F] transition-colors line-clamp-1 mb-2 leading-none">
               {event.title}
             </h3>
           </Link>
 
           {/* Date & Location */}
           <div className="space-y-1 text-xs text-kalvium-muted dark:text-kalvium-dark-muted mb-3">
-            <div className="flex items-center gap-2 font-medium text-kalvium-text dark:text-kalvium-dark-text">
+            <div className="flex items-center gap-2 font-medium text-kalvium-ink dark:text-kalvium-dark-ink">
               <Calendar size={13} className="text-kalvium-coral shrink-0" />
               <span>{event.countdown}</span>
               <span className="text-kalvium-muted font-sans">({event.date})</span>

@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import CampusVerifiedBadge from "@/components/CampusVerifiedBadge";
 import CreateEventStudio from "@/components/CreateEventStudio";
+import EventPhoto from "@/components/EventPhoto";
 import { useAuth } from "@/context/AuthContext";
 
 export default function OrganizerDashboardPage() {
@@ -64,18 +65,15 @@ export default function OrganizerDashboardPage() {
   const events = data?.events || [];
 
   return (
-    <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+    <div className="site-width py-10">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8">
         <div>
-          <span className="text-xs font-sans uppercase tracking-widest text-[#E5391F] font-bold bg-white px-4 py-1.5 rounded-full border-2 border-black shadow-[2px_2px_0px_0px_black]">
-            Organizer Studio
-          </span>
-          <h1 className="text-5xl sm:text-6xl font-display font-black text-black tracking-tighter uppercase mt-4 leading-none">
-            {user.name}
+          <h1 className="text-balance text-4xl font-bold sm:text-5xl">
+            My events
           </h1>
-          <p className="text-xs sm:text-sm font-bold text-gray-600 mt-4 max-w-xl">
-            Submit event flyers for AI extraction or create events manually, monitor review queues, and track campus verification.
+          <p className="mt-2 text-sm text-neutral-600 dark:text-neutral-300">
+            Submit campus events and track their review status.
           </p>
         </div>
 
@@ -91,7 +89,7 @@ export default function OrganizerDashboardPage() {
             <>
               <button
                 onClick={() => setActiveTab("CREATE_AI")}
-                className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-[#E5391F] text-white text-[10px] font-black uppercase tracking-widest shadow-[4px_4px_0px_0px_black] border-2 border-black transition shrink-0 active:scale-95"
+                className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-[#E5391F] text-white text-[10px] font-black uppercase tracking-widest shadow-sm border-2 border-black transition shrink-0 active:scale-95"
               >
                 <Sparkles className="w-4 h-4 text-amber-100" />
                 <span>+ Create with AI</span>
@@ -99,7 +97,7 @@ export default function OrganizerDashboardPage() {
 
               <button
                 onClick={() => setActiveTab("CREATE_MANUAL")}
-                className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-white text-black border-2 border-black text-[10px] font-black uppercase tracking-widest shadow-[4px_4px_0px_0px_black] hover:bg-black hover:text-white transition shrink-0 active:scale-95"
+                className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-white text-black border-2 border-black text-[10px] font-black uppercase tracking-widest shadow-sm hover:bg-black hover:text-white transition shrink-0 active:scale-95"
               >
                 <PenTool className="w-3.5 h-3.5 text-[#E5391F]" />
                 <span>+ Add Manually</span>
@@ -115,7 +113,7 @@ export default function OrganizerDashboardPage() {
           onClick={() => setActiveTab("SUBMISSIONS")}
           className={`px-5 py-2.5 rounded-full text-[10px] uppercase tracking-widest font-black border-2 transition-all duration-200 active:scale-95 flex items-center gap-2 shrink-0 ${
             activeTab === "SUBMISSIONS"
-              ? "bg-[#E5391F] text-white border-black shadow-[4px_4px_0px_0px_black]"
+              ? "bg-[#E5391F] text-white border-black shadow-sm"
               : "bg-white text-black hover:bg-black hover:text-white border-black "
           }`}
         >
@@ -131,7 +129,7 @@ export default function OrganizerDashboardPage() {
           onClick={() => setActiveTab("CREATE_AI")}
           className={`px-5 py-2.5 rounded-full text-[10px] uppercase tracking-widest font-black border-2 transition-all duration-200 active:scale-95 flex items-center gap-2 shrink-0 ${
             activeTab === "CREATE_AI"
-              ? "bg-[#E5391F] text-white border-black shadow-[4px_4px_0px_0px_black]"
+              ? "bg-[#E5391F] text-white border-black shadow-sm"
               : "bg-white text-black hover:bg-black hover:text-white border-black "
           }`}
         >
@@ -143,7 +141,7 @@ export default function OrganizerDashboardPage() {
           onClick={() => setActiveTab("CREATE_MANUAL")}
           className={`px-5 py-2.5 rounded-full text-[10px] uppercase tracking-widest font-black border-2 transition-all duration-200 active:scale-95 flex items-center gap-2 shrink-0 ${
             activeTab === "CREATE_MANUAL"
-              ? "bg-[#E5391F] text-white border-black shadow-[4px_4px_0px_0px_black]"
+              ? "bg-[#E5391F] text-white border-black shadow-sm"
               : "bg-white text-black hover:bg-black hover:text-white border-black "
           }`}
         >
@@ -168,21 +166,21 @@ export default function OrganizerDashboardPage() {
         <div className="space-y-6 animate-fade-in">
           {/* Status Metrics Strip */}
           <div className="grid grid-cols-3 gap-3">
-            <div className="p-6 rounded-2xl border-4 border-black bg-[#FFF8E1] shadow-[4px_4px_0px_0px_black] ">
+            <div className="p-6 rounded-2xl border border-neutral-300 dark:border-neutral-700 bg-[#FFF8E1] shadow-sm ">
               <span className="text-[10px] font-sans text-black uppercase tracking-widest font-black block mb-1">
                 Pending Verification
               </span>
               <p className="text-4xl sm:text-5xl font-display font-black text-black leading-none">{stats.pending}</p>
             </div>
 
-            <div className="p-6 rounded-2xl border-4 border-black bg-[#E8F5E9] shadow-[4px_4px_0px_0px_black] ">
+            <div className="p-6 rounded-2xl border border-neutral-300 dark:border-neutral-700 bg-[#E8F5E9] shadow-sm ">
               <span className="text-[10px] font-sans text-black uppercase tracking-widest font-black block mb-1">
                 Approved & Public
               </span>
               <p className="text-4xl sm:text-5xl font-display font-black text-black leading-none">{stats.approved}</p>
             </div>
 
-            <div className="p-6 rounded-2xl border-4 border-black bg-[#FDEAE7] shadow-[4px_4px_0px_0px_black] ">
+            <div className="p-6 rounded-2xl border border-neutral-300 dark:border-neutral-700 bg-[#FDEAE7] shadow-sm ">
               <span className="text-[10px] font-sans text-[#E5391F] uppercase tracking-widest font-black block mb-1">
                 Declined
               </span>
@@ -192,7 +190,7 @@ export default function OrganizerDashboardPage() {
 
           {/* Submissions List Header */}
           <div className="flex items-center justify-between pt-2">
-            <h2 className="text-xl font-display font-black uppercase tracking-tighter text-black ">
+            <h2 className="text-balance text-xl font-display font-bold text-black">
               Submission History
             </h2>
             <button
@@ -236,12 +234,11 @@ export default function OrganizerDashboardPage() {
               {events.map((ev: any) => (
                 <div
                   key={ev.id}
-                  className="p-6 rounded-2xl bg-white border-4 border-black hover:-translate-y-1 shadow-[4px_4px_0px_0px_black] hover:shadow-[8px_8px_0px_0px_black] transition space-y-4"
+                  className="p-6 rounded-2xl bg-white border border-neutral-300 dark:border-neutral-700 hover:-translate-y-1 shadow-sm hover:shadow-md transition space-y-4"
                 >
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <div className="flex items-start gap-4 min-w-0">
-                      <img
-                        src={ev.posterUrl || "/images/placeholder.svg"}
+                      <EventPhoto posterUrl={ev.posterUrl} category={ev.category}
                         alt={ev.title}
                         className="w-16 h-16 sm:w-20 sm:h-20 rounded-xl object-cover bg-gray-100  shrink-0 border-2 border-black "
                       />
@@ -253,7 +250,7 @@ export default function OrganizerDashboardPage() {
                           {renderStatusBadge(ev.status)}
                           {ev.status === "APPROVED" && <CampusVerifiedBadge size="sm" />}
                         </div>
-                        <h3 className="text-xl font-display font-black uppercase tracking-tighter text-black mb-1 truncate leading-none mt-2">{ev.title}</h3>
+                        <h3 className="text-balance text-xl font-display font-bold text-black mb-1 truncate leading-none mt-2">{ev.title}</h3>
                         <p className="text-xs text-gray-500 ">
                           {ev.date} • {ev.startTime} – {ev.endTime} • {ev.venue}
                         </p>
@@ -264,7 +261,7 @@ export default function OrganizerDashboardPage() {
                       {ev.status === "APPROVED" && (
                         <Link
                           href={`/events/${ev.id}`}
-                          className="px-5 py-2.5 rounded-full text-[10px] font-black uppercase tracking-widest text-[#E5391F] bg-white hover:bg-black hover:text-white border-2 border-black shadow-[2px_2px_0px_0px_black] transition"
+                          className="px-5 py-2.5 rounded-full text-[10px] font-black uppercase tracking-widest text-[#E5391F] bg-white hover:bg-black hover:text-white border-2 border-black shadow-sm transition"
                         >
                           Public Page →
                         </Link>

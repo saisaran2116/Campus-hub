@@ -1,13 +1,14 @@
+import { ticketConfig } from "@/lib/stripe-test";
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getAuthUser } from "@/lib/auth";
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   try {
-    const { id } = params;
 
     const event = await prisma.event.findUnique({
       where: { id },
@@ -72,7 +73,11 @@ export async function GET(
           approvalHistory: [],
         };
 
-    return NextResponse.json({ success: true, event: sanitizedEvent });
+    const testCheckoutAvailable = event.status === "APPROVED" && ticketConfig()?.eventId === event.id;
+    const hasTicket = testCheckoutAvailable && auth ? !!await prisma.ticketOrder.count({
+      where: { eventId: event.id, userId: auth.userId, paidAt: { not: null } },
+    }) : false;
+    return NextResponse.json({ success: true, event: { ...sanitizedEvent, testCheckoutAvailable, hasTicket } });
   } catch (error) {
     console.error("Get event by ID error:", error);
     return NextResponse.json(

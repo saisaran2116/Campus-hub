@@ -1,7 +1,8 @@
+import { readObject } from "@/lib/request-body";
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getAuthUser } from "@/lib/auth";
-import { checkTwoEventsClash } from "@/lib/clash";
+import { checkTwoEventsClash, nearbyDates } from "@/lib/clash";
 
 export async function POST(req: NextRequest) {
   try {
@@ -10,8 +11,10 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ hasClash: false });
     }
 
-    const { eventId } = await req.json();
-    if (!eventId) {
+    const body = await readObject(req);
+    if (!body) return NextResponse.json({ error: "Expected a JSON object." }, { status: 400 });
+    const { eventId } = body;
+    if (typeof eventId !== "string" || !eventId) {
       return NextResponse.json({ error: "Event ID is required." }, { status: 400 });
     }
 
@@ -35,12 +38,11 @@ export async function POST(req: NextRequest) {
     });
     const isAlreadySaved = !!existingSave;
 
-    // Fetch only saved events on the exact same date for this user
-    const sameDateSaved = await prisma.savedEvent.findMany({
+    const nearbySaved = await prisma.savedEvent.findMany({
       where: {
         userId: auth.userId,
         event: {
-          date: targetEvent.date,
+          date: { in: nearbyDates(targetEvent.date) },
         },
       },
       include: {
@@ -48,8 +50,7 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    // Look for clashes among existing saved events on this date
-    for (const record of sameDateSaved) {
+    for (const record of nearbySaved) {
       if (record.eventId === eventId) continue;
       const existing = record.event;
       const clash = checkTwoEventsClash(targetEvent, existing);

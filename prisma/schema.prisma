@@ -3,7 +3,7 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
@@ -11,6 +11,7 @@ model User {
   id              String            @id @default(cuid())
   name            String
   email           String            @unique
+  googleSubject   String?           @unique
   password        String
   role            String            @default("STUDENT") // STUDENT | ORGANIZER | CAMPUS_MANAGER
   avatar          String?
@@ -20,6 +21,7 @@ model User {
   verifiedEvents  Event[]           @relation("EventVerifier")
   savedEvents     SavedEvent[]
   approvals       ApprovalHistory[]
+  ticketOrders    TicketOrder[]
 }
 
 model Event {
@@ -52,6 +54,7 @@ model Event {
   updatedAt          DateTime          @updatedAt
 
   savedBy            SavedEvent[]
+  ticketOrders       TicketOrder[]
   analyses           EventAnalysis[]
   approvalHistory    ApprovalHistory[]
 
@@ -103,4 +106,17 @@ model ApprovalHistory {
   @@index([eventId])
   @@index([managerId])
   @@index([timestamp])
+}
+
+model TicketOrder {
+  id               String   @id @default(cuid())
+  userId           String
+  user             User     @relation(fields: [userId], references: [id], onDelete: Restrict)
+  eventId          String
+  event            Event    @relation(fields: [eventId], references: [id], onDelete: Restrict)
+  stripeSessionId  String?  @unique
+  paidAt           DateTime?
+  createdAt        DateTime @default(now())
+
+  @@unique([userId, eventId])
 }

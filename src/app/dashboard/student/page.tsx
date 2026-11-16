@@ -45,7 +45,7 @@ export default function StudentDashboardPage() {
     return (
       <div className="max-w-md mx-auto px-4 py-20 text-center">
         <p className="text-kalvium-muted dark:text-kalvium-dark-muted mb-4">Please log in to view your student dashboard.</p>
-        <Link href="/login" className="px-5 py-2.5 bg-[#E5391F] hover:bg-black text-white px-6 py-3 rounded-full text-xs font-black shadow-[4px_4px_0px_0px_black] uppercase tracking-widest border-2 border-black transition">
+        <Link href="/login" className="px-5 py-2.5 bg-[#E5391F] hover:bg-black text-white px-6 py-3 rounded-full text-xs font-black shadow-sm uppercase tracking-widest border-2 border-black transition">
           Sign In
         </Link>
       </div>
@@ -57,7 +57,7 @@ export default function StudentDashboardPage() {
   const startingSoonEvent = savedEvents.find((e: any) => e.isStartingSoon);
 
   return (
-    <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+    <div className="site-width py-10">
       {/* Hero Welcome */}
       <div className="mb-8">
         <div className="flex items-center gap-2 mb-2">
@@ -66,7 +66,7 @@ export default function StudentDashboardPage() {
           </span>
           <CampusVerifiedBadge size="sm" />
         </div>
-        <h1 className="text-3xl sm:text-5xl font-display font-black tracking-tighter uppercase text-kalvium-text dark:text-kalvium-dark-text tracking-tight">
+        <h1 className="text-balance text-3xl sm:text-5xl font-display font-bold text-kalvium-ink dark:text-kalvium-dark-ink">
           Good morning, {user.name.split(" ")[0]} 👋
         </h1>
         <p className="text-base text-kalvium-muted dark:text-kalvium-dark-muted mt-2">
@@ -76,17 +76,17 @@ export default function StudentDashboardPage() {
 
       {/* Metrics Row */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 mb-10">
-        <div className="p-5 rounded-2xl bg-white dark:bg-kalvium-dark-surface border-4 border-[#111111] dark:border-[#444444] shadow-[6px_6px_0px_0px_#111111] dark:shadow-[6px_6px_0px_0px_#444444] transition-all duration-300 hover:-translate-y-0.5 animate-slide-up stagger-1">
+        <div className="p-5 rounded-2xl bg-white dark:bg-kalvium-dark-surface border border-neutral-300 dark:border-[#444444] shadow-sm dark:shadow-[6px_6px_0px_0px_#444444] transition-all duration-300 hover:-translate-y-0.5 animate-slide-up stagger-1">
           <span className="text-[11px] font-sans text-kalvium-muted uppercase tracking-wider font-semibold block mb-1">
             SAVED EVENTS
           </span>
           <div className="flex items-baseline gap-2">
-            <span className="text-4xl font-display font-black tracking-tighter uppercase text-kalvium-text dark:text-kalvium-dark-text">{savedEvents.length}</span>
+            <span className="text-4xl font-display font-black tracking-tighter uppercase text-kalvium-ink dark:text-kalvium-dark-ink">{savedEvents.length}</span>
             <span className="text-xs text-kalvium-muted">on personal schedule</span>
           </div>
         </div>
 
-        <div className="p-5 rounded-2xl bg-white dark:bg-kalvium-dark-surface border-4 border-[#111111] dark:border-[#444444] shadow-[6px_6px_0px_0px_#111111] dark:shadow-[6px_6px_0px_0px_#444444] transition-all duration-300 hover:-translate-y-0.5 animate-slide-up stagger-2">
+        <div className="p-5 rounded-2xl bg-white dark:bg-kalvium-dark-surface border border-neutral-300 dark:border-[#444444] shadow-sm dark:shadow-[6px_6px_0px_0px_#444444] transition-all duration-300 hover:-translate-y-0.5 animate-slide-up stagger-2">
           <span className="text-[11px] font-sans text-kalvium-muted uppercase tracking-wider font-semibold block mb-1">
             STARTING SOON
           </span>
@@ -99,7 +99,7 @@ export default function StudentDashboardPage() {
         </div>
 
         <div
-          className={`p-5 rounded-2xl border-2 border-black shadow-[4px_4px_0px_0px_black] transition-all duration-300 hover:-translate-y-0.5 animate-slide-up stagger-3 ${conflictsCount > 0
+          className={`p-5 rounded-2xl border-2 border-black shadow-sm transition-all duration-300 hover:-translate-y-0.5 animate-slide-up stagger-3 ${conflictsCount > 0
               ? "bg-kalvium-warning-tint dark:bg-kalvium-dark-warning-tint border-kalvium-warning-border"
               : "bg-white dark:bg-kalvium-dark-surface border border-kalvium-border dark:border-kalvium-dark-border"
             }`}
@@ -111,7 +111,7 @@ export default function StudentDashboardPage() {
             <span className="text-4xl font-display font-black tracking-tighter uppercase text-kalvium-warning">
               {conflictsCount}
             </span>
-            <span className="text-xs text-kalvium-text dark:text-kalvium-dark-text">
+            <span className="text-xs text-kalvium-ink dark:text-kalvium-dark-ink">
               {conflictsCount === 1 ? "overlapping clash" : "overlapping clashes"}
             </span>
           </div>
@@ -128,7 +128,7 @@ export default function StudentDashboardPage() {
 
       {/* Starting Soon Spotlight Card if applicable */}
       {startingSoonEvent && (
-        <div className="mb-10 p-6 rounded-3xl bg-kalvium-coral-tint dark:bg-kalvium-dark-coral-tint border-4 border-black shadow-[8px_8px_0px_0px_black] relative overflow-hidden animate-scale-in">
+        <div className="mb-10 p-6 rounded-3xl bg-kalvium-coral-tint dark:bg-kalvium-dark-coral-tint border border-neutral-300 dark:border-neutral-700 shadow-sm relative overflow-hidden animate-scale-in">
           <div className="flex items-center gap-2 mb-3">
             <span className="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-kalvium-coral text-white flex items-center gap-1.5 shadow-sm">
               <Flame className="w-3.5 h-3.5 text-amber-100 animate-pulse" />
@@ -139,10 +139,10 @@ export default function StudentDashboardPage() {
 
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
             <div className="lg:col-span-8 space-y-2">
-              <h2 className="text-2xl sm:text-3xl font-display font-black tracking-tighter uppercase text-kalvium-text dark:text-kalvium-dark-text tracking-tight">
+              <h2 className="text-balance text-2xl sm:text-3xl font-display font-bold text-kalvium-ink dark:text-kalvium-dark-ink">
                 {startingSoonEvent.title}
               </h2>
-              <div className="flex items-center gap-4 text-xs text-kalvium-text dark:text-kalvium-dark-text font-medium flex-wrap">
+              <div className="flex items-center gap-4 text-xs text-kalvium-ink dark:text-kalvium-dark-ink font-medium flex-wrap">
                 <span className="text-kalvium-coral font-bold">{startingSoonEvent.countdown}</span>
                 <span>•</span>
                 <span>{startingSoonEvent.startTime} – {startingSoonEvent.endTime}</span>
@@ -172,7 +172,7 @@ export default function StudentDashboardPage() {
         {/* Left: Your Upcoming Events */}
         <div className="lg:col-span-8 space-y-4">
           <div className="flex items-center justify-between">
-            <h2 className="text-lg font-display font-black tracking-tighter uppercase uppercase tracking-wider text-kalvium-text dark:text-kalvium-dark-text">
+            <h2 className="text-balance text-lg font-display font-bold text-kalvium-ink dark:text-kalvium-dark-ink">
               Your Upcoming Saved Events
             </h2>
             <Link
@@ -217,7 +217,7 @@ export default function StudentDashboardPage() {
                       )}
                     </div>
                     <Link href={`/events/${ev.id}`}>
-                      <h4 className="text-sm font-bold text-kalvium-text dark:text-kalvium-dark-text group-hover:text-kalvium-coral transition-colors truncate">
+                      <h4 className="text-sm font-bold text-kalvium-ink dark:text-kalvium-dark-ink group-hover:text-kalvium-coral transition-colors truncate">
                         {ev.title}
                       </h4>
                     </Link>
@@ -230,7 +230,7 @@ export default function StudentDashboardPage() {
 
                   <Link
                     href={`/events/${ev.id}`}
-                    className="p-2 rounded-full bg-kalvium-surface-alt dark:bg-kalvium-dark-surface-alt hover:bg-kalvium-coral hover:text-white text-kalvium-text dark:text-kalvium-dark-text shrink-0 transition-all duration-200 active:scale-95 group-hover:translate-x-0.5"
+                    className="p-2 rounded-full bg-kalvium-surface-alt dark:bg-kalvium-dark-surface-alt hover:bg-kalvium-coral hover:text-white text-kalvium-ink dark:text-kalvium-dark-ink shrink-0 transition-all duration-200 active:scale-95 group-hover:translate-x-0.5"
                   >
                     <ArrowRight className="w-4 h-4" />
                   </Link>
@@ -243,10 +243,10 @@ export default function StudentDashboardPage() {
         {/* Right: Quick Discovery & Tips */}
         <div className="lg:col-span-4 space-y-6">
           <div className="p-5 rounded-2xl bg-white dark:bg-kalvium-dark-surface border border-kalvium-border dark:border-kalvium-dark-border space-y-3 shadow-kalvium-sm">
-            <h3 className="text-xs font-sans uppercase tracking-wider text-kalvium-muted font-bold">
+            <h3 className="text-balance text-xs font-sans text-kalvium-muted font-bold">
               Campus Trust Principle
             </h3>
-            <p className="text-xs text-kalvium-text dark:text-kalvium-dark-text leading-relaxed">
+            <p className="text-xs text-kalvium-ink dark:text-kalvium-dark-ink leading-relaxed">
               Every event visible in the student explore portal has been verified against the organizer's original poster by the Campus Manager.
             </p>
             <div className="pt-2">
@@ -254,9 +254,9 @@ export default function StudentDashboardPage() {
             </div>
           </div>
 
-          <div className="p-5 rounded-2xl bg-kalvium-coral-tint dark:bg-kalvium-dark-coral-tint border-4 border-black space-y-3 shadow-[6px_6px_0px_0px_black]">
-            <h3 className="text-xs font-bold text-kalvium-coral">Need to find more events?</h3>
-            <p className="text-xs text-kalvium-text dark:text-kalvium-dark-text">
+          <div className="p-5 rounded-2xl bg-kalvium-coral-tint dark:bg-kalvium-dark-coral-tint border border-neutral-300 dark:border-neutral-700 space-y-3 shadow-sm">
+            <h3 className="text-balance text-xs font-bold text-kalvium-coral">Need to find more events?</h3>
+            <p className="text-xs text-kalvium-ink dark:text-kalvium-dark-ink">
               Discover hackathons, workshops, music nights, and athletic tournaments happening this week.
             </p>
             <Link

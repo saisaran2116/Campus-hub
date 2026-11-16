@@ -2,7 +2,7 @@
  * Schedule Clash Detection Engine
  * 
  * Formal collision algorithm:
- * Two events clash on the same date IF AND ONLY IF:
+ * Two events clash IF AND ONLY IF (after aligning their dates):
  *   eventA.start < eventB.end AND eventB.start < eventA.end
  * 
  * Back-to-back events (e.g. 10:00 AM - 12:00 PM and 12:00 PM - 1:00 PM) DO NOT clash.
@@ -96,10 +96,8 @@ export function formatMinutesToTime(minutes: number): string {
  * Supports overnight events spanning past midnight.
  */
 export function checkTwoEventsClash(a: TimeSlot, b: TimeSlot): ClashResult {
-  // Must be on the exact same date
-  if (a.date !== b.date) {
-    return { hasClash: false };
-  }
+  const offset = (Date.parse(b.date) - Date.parse(a.date)) / 60_000;
+  if (!Number.isFinite(offset) || Math.abs(offset) > 1440) return { hasClash: false };
 
   const rawStartA = parseTimeToMinutes(a.startTime);
   let rawEndA = parseTimeToMinutes(a.endTime);
@@ -121,15 +119,15 @@ export function checkTwoEventsClash(a: TimeSlot, b: TimeSlot): ClashResult {
 
   // Exact collision formula:
   // startA < endB AND startB < endA
-  const overlaps = rawStartA < rawEndB && rawStartB < rawEndA;
+  const overlaps = rawStartA < rawEndB + offset && rawStartB + offset < rawEndA;
 
   if (!overlaps) {
     return { hasClash: false };
   }
 
   // Calculate the exact overlap window
-  const overlapStart = Math.max(rawStartA, rawStartB);
-  const overlapEnd = Math.min(rawEndA, rawEndB);
+  const overlapStart = Math.max(rawStartA, rawStartB + offset);
+  const overlapEnd = Math.min(rawEndA, rawEndB + offset);
   const duration = Math.max(0, overlapEnd - overlapStart);
 
   if (duration === 0) {
@@ -140,8 +138,8 @@ export function checkTwoEventsClash(a: TimeSlot, b: TimeSlot): ClashResult {
     hasClash: true,
     conflictingEvent: b,
     overlap: {
-      startMinutes: overlapStart % 1440,
-      endMinutes: overlapEnd % 1440,
+      startMinutes: (overlapStart % 1440 + 1440) % 1440,
+      endMinutes: (overlapEnd % 1440 + 1440) % 1440,
       formatted: `${formatMinutesToTime(overlapStart)} – ${formatMinutesToTime(overlapEnd)}`,
       durationMinutes: duration,
     },
@@ -182,4 +180,10 @@ export function findAllClashesInList(events: TimeSlot[]): Array<{ eventA: TimeSl
   }
 
   return clashes;
+}
+
+export function nearbyDates(date: string): string[] {
+  const timestamp = Date.parse(date);
+  if (!Number.isFinite(timestamp)) return [date];
+  return [-1, 0, 1].map((offset) => new Date(timestamp + offset * 86400_000).toISOString().slice(0, 10));
 }

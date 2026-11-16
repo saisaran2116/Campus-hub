@@ -1,16 +1,8 @@
 "use client";
 
-import React, { useState } from "react";
-import { XCircle, X } from "lucide-react";
+import { useEffect, useId, useRef, useState, type FormEvent } from "react";
 
-interface DeclineReasonModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  onConfirmDecline: (reason: string, customNotes: string) => void;
-  eventTitle: string;
-}
-
-const PRESET_REASONS = [
+const reasons = [
   "Information doesn't match poster",
   "Event cannot be verified",
   "Invalid date",
@@ -21,116 +13,63 @@ const PRESET_REASONS = [
   "Other",
 ];
 
-export default function DeclineReasonModal({
-  isOpen,
-  onClose,
-  onConfirmDecline,
-  eventTitle,
-}: DeclineReasonModalProps) {
-  const [selectedReason, setSelectedReason] = useState(PRESET_REASONS[0]);
-  const [customNotes, setCustomNotes] = useState("");
+export default function DeclineReasonModal({ isOpen, onClose, onConfirmDecline, eventTitle }: {
+  isOpen: boolean;
+  onClose: () => void;
+  onConfirmDecline: (reason: string, notes: string) => Promise<boolean>;
+  eventTitle: string;
+}) {
+  const [reason, setReason] = useState(reasons[0]);
+  const [notes, setNotes] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState(false);
+  const dialog = useRef<HTMLDialogElement>(null);
+  const titleId = useId();
 
-  if (!isOpen) return null;
+  useEffect(() => {
+    if (isOpen && dialog.current && !dialog.current.open) dialog.current.showModal();
+  }, [isOpen]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  async function submit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
     setSubmitting(true);
+    setError(false);
     try {
-      await onConfirmDecline(selectedReason, customNotes);
-      onClose();
+      if (await onConfirmDecline(reason, notes)) onClose();
+      else setError(true);
     } finally {
       setSubmitting(false);
     }
-  };
+  }
 
+  if (!isOpen) return null;
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-      <div className="relative w-full max-w-lg bg-white border-4 border-black shadow-[8px_8px_0px_0px_black] rounded-none p-6 text-black">
-        <div className="flex items-start justify-between gap-4 border-b-4 border-black pb-4 mb-4">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 bg-bauhaus-red border-2 border-black flex items-center justify-center shrink-0">
-              <XCircle className="w-6 h-6 text-white" strokeWidth={3} />
-            </div>
-            <div>
-              <span className="text-xs font-black uppercase tracking-widest text-bauhaus-red block">
-                Manager Action
-              </span>
-              <h3 className="text-2xl font-display font-black text-black uppercase tracking-tight">Decline Event</h3>
-            </div>
-          </div>
-          <button
-            onClick={onClose}
-            className="text-black border-2 border-transparent hover:border-black p-1 transition"
-          >
-            <X className="w-6 h-6" strokeWidth={3} />
-          </button>
-        </div>
-
-        <p className="text-sm font-bold uppercase tracking-widest mb-6">
-          Declining <span className="text-bauhaus-red">"{eventTitle}"</span>. The organizer will receive your feedback and the event will remain private.
-        </p>
-
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div>
-            <label className="block text-sm font-black text-black uppercase tracking-widest mb-3">
-              Why are you declining this event?
-            </label>
-            <div className="space-y-2 max-h-48 overflow-y-auto pr-2 custom-scrollbar">
-              {PRESET_REASONS.map((reason) => (
-                <label
-                  key={reason}
-                  className={`flex items-center gap-3 p-3 border-2 text-sm font-bold uppercase tracking-widest cursor-pointer transition-all duration-200 ${selectedReason === reason
-                      ? "bg-bauhaus-yellow border-black shadow-[2px_2px_0px_0px_black] text-black"
-                      : "bg-white border-gray-300 text-gray-500 hover:border-black hover:text-black"
-                    }`}
-                >
-                  <input
-                    type="radio"
-                    name="declineReason"
-                    value={reason}
-                    checked={selectedReason === reason}
-                    onChange={() => setSelectedReason(reason)}
-                    className="accent-black w-4 h-4"
-                  />
-                  <span>{reason}</span>
-                </label>
-              ))}
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-sm font-black text-black uppercase tracking-widest mb-3">
-              Specific Instructions / Notes for Organizer:
-            </label>
-            <textarea
-              value={customNotes}
-              onChange={(e) => setCustomNotes(e.target.value)}
-              placeholder="e.g. The venue stated on the poster does not match student union bookings for this date. Please attach revised poster."
-              rows={3}
-              className="w-full bg-white border-4 border-black rounded-none px-4 py-3 text-sm font-bold text-black placeholder:text-gray-400 focus:outline-none focus:bg-bauhaus-yellow transition-colors"
-            />
-          </div>
-
-          <div className="flex items-center justify-end gap-4 pt-4 border-t-4 border-black">
-            <button
-              type="button"
-              onClick={onClose}
-              className="btn-bauhaus-ghost px-6 py-3 text-sm"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={submitting}
-              className="btn-bauhaus px-6 py-3 text-sm text-white"
-              style={{ backgroundColor: "#D02020" }}
-            >
-              {submitting ? "DECLINING..." : "CONFIRM DECLINE"}
-            </button>
+    <dialog ref={dialog} className="modal" aria-labelledby={titleId} onCancel={(event) => {
+      if (submitting) event.preventDefault();
+      else onClose();
+    }}>
+      <div className="modal-box site-surface">
+        <h2 id={titleId} className="text-xl font-semibold">Decline event</h2>
+        <p className="site-muted mt-2 text-pretty">Send feedback to the organizer of {eventTitle}.</p>
+        <form onSubmit={submit} className="mt-5 grid gap-4">
+          <label className="grid gap-1 text-sm font-medium">
+            Reason
+            <select className="select select-bordered w-full bg-transparent" value={reason} onChange={(event) => setReason(event.target.value)} disabled={submitting}>
+              {reasons.map((item) => <option key={item}>{item}</option>)}
+            </select>
+          </label>
+          <label className="grid gap-1 text-sm font-medium">
+            Notes {reason !== "Other" && "(optional)"}
+            <textarea className="textarea textarea-bordered bg-transparent" rows={3} maxLength={500}
+              required={reason === "Other"} value={notes} onChange={(event) => setNotes(event.target.value)} disabled={submitting} />
+          </label>
+          {error && <p role="alert" className="site-link text-sm">Could not decline the event. Please try again.</p>}
+          <div className="modal-action mt-0 flex-wrap">
+            <button type="button" className="btn site-secondary" onClick={onClose} disabled={submitting}>Cancel</button>
+            <button className="btn site-primary" disabled={submitting}>{submitting ? "Submitting…" : "Decline event"}</button>
           </div>
         </form>
       </div>
-    </div>
+    </dialog>
   );
 }

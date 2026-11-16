@@ -82,10 +82,6 @@ html.dark .card-kalvium {
 .badge-kalvium {
   @apply inline-flex items-center gap-1.5 px-3 py-1 text-xs font-bold rounded-full border transition-colors;
 }
-.badge-red { @apply bg-kalvium-red-light text-kalvium-red border-kalvium-red-light; }
-.badge-black { @apply bg-kalvium-black text-white border-kalvium-black; }
-.badge-neutral { @apply bg-kalvium-neutral-100 text-kalvium-black-muted border-kalvium-neutral-200; }
-.badge-white { @apply bg-white text-kalvium-black border-kalvium-neutral-300; }
 
 /* Interactive transitions */
 button,
@@ -121,3 +117,32 @@ textarea {
 ::-webkit-scrollbar-thumb:hover {
   background: #E5391F;
 }
+
+:focus-visible {
+  outline: 2px solid #b91c1c;
+  outline-offset: 3px;
+}
+
+html.dark :focus-visible {
+  outline-color: #fca5a5;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+@layer components {
+  .site-width { @apply mx-auto w-full max-w-7xl px-5 sm:px-8; }
+  .site-surface { @apply rounded-2xl border border-stone-200 bg-white dark:border-stone-800 dark:bg-neutral-900; }
+  .site-muted { @apply text-stone-600 dark:text-stone-300; }
+  .site-link { @apply text-rose-800 hover:underline dark:text-rose-300; }
+  .site-primary { @apply border-rose-900 bg-rose-900 text-white hover:border-rose-950 hover:bg-rose-950 dark:border-rose-300 dark:bg-rose-300 dark:text-rose-950 dark:hover:bg-rose-200; }
+  .site-secondary { @apply border-stone-300 bg-white text-stone-900 hover:border-stone-500 hover:bg-stone-100 dark:border-stone-700 dark:bg-neutral-900 dark:text-stone-100 dark:hover:bg-neutral-800; }
+}
+
+html { color-scheme: light; }
+html.dark { color-scheme: dark; }

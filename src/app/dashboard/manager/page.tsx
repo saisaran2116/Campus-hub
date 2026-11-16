@@ -20,11 +20,12 @@ import {
   Eye,
   Info,
 } from "lucide-react";
-import confetti from "canvas-confetti";
 import CampusVerifiedBadge from "@/components/CampusVerifiedBadge";
 import DeclineReasonModal from "@/components/DeclineReasonModal";
+import EventPhoto from "@/components/EventPhoto";
+import { eventArtwork } from "@/lib/event-artwork";
 import { useAuth } from "@/context/AuthContext";
-import { ConfidenceLevel } from "@/lib/ai-poster-analyzer";
+import { ConfidenceLevel } from "@/lib/poster-samples";
 
 export default function CampusManagerVerificationQueue() {
   const { user } = useAuth();
@@ -44,14 +45,19 @@ export default function CampusManagerVerificationQueue() {
   // Decline modal state
   const [declineModalOpen, setDeclineModalOpen] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
+  const [queueError, setQueueError] = useState("");
+  const [historyError, setHistoryError] = useState("");
+  const [actionError, setActionError] = useState("");
   const [successToast, setSuccessToast] = useState<string | null>(null);
 
   const fetchPendingQueue = async () => {
     if (!user) return;
     setLoading(true);
+    setQueueError("");
     try {
       const res = await fetch("/api/manager/pending", { cache: "no-store" });
-      if (res.ok) {
+      if (!res.ok) throw new Error();
+      {
         const json = await res.json();
         setData(json);
         if (json.pendingEvents && json.pendingEvents.length > 0 && !selectedEvent) {
@@ -59,7 +65,7 @@ export default function CampusManagerVerificationQueue() {
         }
       }
     } catch (e) {
-      console.error("Queue load error:", e);
+      setQueueError("Could not load the review queue.");
     } finally {
       setLoading(false);
     }
@@ -68,14 +74,16 @@ export default function CampusManagerVerificationQueue() {
   const fetchHistory = async () => {
     if (!user) return;
     setHistoryLoading(true);
+    setHistoryError("");
     try {
       const res = await fetch("/api/manager/history", { cache: "no-store" });
-      if (res.ok) {
+      if (!res.ok) throw new Error();
+      {
         const json = await res.json();
         setHistory(json.history || []);
       }
     } catch (e) {
-      console.error("History load error:", e);
+      setHistoryError("Could not load event history.");
     } finally {
       setHistoryLoading(false);
     }
@@ -105,6 +113,7 @@ export default function CampusManagerVerificationQueue() {
   // Campus Manager Approves Event
   const handleApprove = async () => {
     if (!selectedEvent) return;
+    setActionError("");
     setActionLoading(true);
     try {
       const res = await fetch("/api/manager/verify", {
@@ -117,16 +126,12 @@ export default function CampusManagerVerificationQueue() {
         }),
       });
 
-      if (res.ok) {
-        // Trigger celebratory confetti for verification stamp!
-        confetti({
-          particleCount: 80,
-          spread: 70,
-          origin: { y: 0.6 },
-          colors: ["#10B981", "#6366F1", "#3B82F6"],
-        });
-
-        setSuccessToast(`✓ "${selectedEvent.title}" stamped with CAMPUS VERIFIED badge and published!`);
+      if (!res.ok) {
+        const body = await res.json().catch(() => null);
+        throw new Error(body?.error || "Could not save your decision.");
+      }
+      {
+        setSuccessToast(`"${selectedEvent.title}" is published.`);
         setTimeout(() => setSuccessToast(null), 5000);
 
         setSelectedEvent(null);
@@ -134,7 +139,7 @@ export default function CampusManagerVerificationQueue() {
         fetchHistory();
       }
     } catch (e) {
-      console.error(e);
+      setActionError(e instanceof Error ? e.message : "Could not save your decision.");
     } finally {
       setActionLoading(false);
     }
@@ -142,7 +147,8 @@ export default function CampusManagerVerificationQueue() {
 
   // Campus Manager Declines Event
   const handleConfirmDecline = async (reason: string, customNotes: string) => {
-    if (!selectedEvent) return;
+    if (!selectedEvent) return false;
+    setActionError("");
     setActionLoading(true);
     try {
       const res = await fetch("/api/manager/verify", {
@@ -156,15 +162,21 @@ export default function CampusManagerVerificationQueue() {
         }),
       });
 
-      if (res.ok) {
+      if (!res.ok) {
+        const body = await res.json().catch(() => null);
+        throw new Error(body?.error || "Could not save your decision.");
+      }
+      {
         setSuccessToast(`Event declined. Feedback logged for organizer.`);
         setTimeout(() => setSuccessToast(null), 4000);
         setSelectedEvent(null);
         fetchPendingQueue();
         fetchHistory();
+        return true;
       }
     } catch (e) {
-      console.error(e);
+      setActionError(e instanceof Error ? e.message : "Could not save your decision.");
+      return false;
     } finally {
       setActionLoading(false);
     }
@@ -177,7 +189,7 @@ export default function CampusManagerVerificationQueue() {
           <div className="w-12 h-12 rounded-full bg-kalvium-success-tint border border-kalvium-success-border text-kalvium-success flex items-center justify-center mx-auto mb-3">
             <ShieldCheck className="w-6 h-6" />
           </div>
-          <h2 className="text-xl font-display font-black text-kalvium-ink dark:text-kalvium-dark-ink mb-2">Campus Manager Portal</h2>
+          <h2 className="text-balance text-xl font-display font-bold text-kalvium-ink dark:text-kalvium-dark-ink mb-2">Campus Manager Portal</h2>
           <p className="text-xs text-kalvium-muted dark:text-kalvium-dark-muted mb-6">
             Only campus leadership and verified managers have authority to approve or decline submissions.
             Please switch to "Dr. Sharma (Campus Manager)" using the top evaluation bar.
@@ -218,48 +230,29 @@ export default function CampusManagerVerificationQueue() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-      {/* Signature Pipeline Concept Header */}
+    <div className="site-width py-10">
       <div className="mb-8">
-        <div className="flex items-center gap-2 mb-2 flex-wrap">
-          <span className="text-[10px] font-sans uppercase tracking-widest text-black font-black bg-white px-4 py-1.5 rounded-full border-2 border-black shadow-[2px_2px_0px_0px_black]">
-            Official Campus Certification Studio
-          </span>
-          <span className="text-kalvium-muted hidden sm:inline">•</span>
-          <div className="hidden sm:flex items-center gap-2 text-[10px] font-sans font-black tracking-widest text-black bg-white px-4 py-1.5 rounded-full border-2 border-black shadow-[2px_2px_0px_0px_black]">
-            <span className="text-black font-black uppercase tracking-widest">POSTER TRUTH</span>
-            <span className="text-[#E5391F] font-black">→</span>
-            <span className="text-[#E5391F] font-black uppercase tracking-widest">AI UNDERSTANDING</span>
-            <span className="text-[#E5391F] font-black">→</span>
-            <span className="text-[#FFB300] font-black uppercase tracking-widest">HUMAN VERIFICATION</span>
-            <span className="text-kalvium-success font-bold">→</span>
-            <span className="text-white font-black bg-[#10B981] px-2.5 py-0.5 rounded-full border-2 border-black shadow-[2px_2px_0px_0px_black] uppercase tracking-widest">
-              ✓ CAMPUS VERIFIED
-            </span>
-          </div>
-        </div>
-
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
           <div>
-            <h1 className="text-5xl sm:text-6xl font-display font-black text-black tracking-tighter uppercase mt-4 leading-none">
-              Event Verification Center
+            <h1 className="text-balance text-4xl font-bold sm:text-5xl">
+              Review queue
             </h1>
-            <p className="text-xs sm:text-sm text-black font-bold mt-4">
-              Authenticate event legitimacy against original posters before events reach student feeds.
+            <p className="mt-2 text-sm text-neutral-600 dark:text-neutral-300">
+              Review submissions before publishing them to the campus catalogue.
             </p>
           </div>
 
           <div className="flex items-center gap-3">
             <Link
               href="/dashboard/manager/history"
-              className="px-6 py-3 rounded-full bg-white border-2 border-black text-[10px] font-black uppercase tracking-widest text-black hover:bg-black hover:text-white transition-all shadow-[4px_4px_0px_0px_black] active:translate-y-1 active:shadow-[2px_2px_0px_0px_black]"
+              className="btn site-secondary"
             >
-              View Audit History →
+              Review history
             </Link>
             <button
               onClick={fetchPendingQueue}
-              className="p-3 rounded-full bg-white border-2 border-black text-black hover:bg-black hover:text-white transition-all shadow-[4px_4px_0px_0px_black] active:translate-y-1 active:shadow-[2px_2px_0px_0px_black]"
-              title="Refresh Queue"
+              className="btn btn-square site-secondary"
+              aria-label="Refresh review queue"
             >
               <RefreshCw className="w-4 h-4" />
             </button>
@@ -267,6 +260,13 @@ export default function CampusManagerVerificationQueue() {
         </div>
       </div>
 
+      {(queueError || historyError || actionError) && (
+        <div role="alert" className="site-surface site-link mb-6 p-4">
+          {actionError || queueError || historyError}
+          {(queueError || historyError) && <button type="button" className="btn btn-sm site-secondary ml-3"
+            onClick={() => { fetchPendingQueue(); fetchHistory(); }}>Retry</button>}
+        </div>
+      )}
       {/* Success Notification */}
       {successToast && (
         <div className="mb-6 p-4 rounded-2xl bg-kalvium-success-tint border border-kalvium-success-border text-kalvium-success text-xs font-semibold flex items-center justify-between shadow-soft-sm animate-slide-down">
@@ -277,70 +277,18 @@ export default function CampusManagerVerificationQueue() {
         </div>
       )}
 
-      {/* 3 Main Task-Focused Tabs: Pending / Approved / Declined */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-12">
-        <button
-          onClick={() => setActiveTab("PENDING")}
-          className={`p-6 rounded-2xl border-4 border-black text-left transition-all shadow-[4px_4px_0px_0px_black] hover:-translate-y-1 hover:shadow-[8px_8px_0px_0px_black] ${activeTab === "PENDING"
-              ? "bg-white"
-              : "bg-gray-100 opacity-80"
-            }`}
-        >
-          <div className="flex items-center justify-between">
-            <span className="text-[10px] font-sans uppercase tracking-widest font-black text-black">
-              Needs Review
-            </span>
-            <span className="w-3 h-3 rounded-full bg-[#FFB300] border-2 border-black animate-pulse" />
-          </div>
-          <p className="text-5xl sm:text-6xl font-display font-black text-black mt-4 leading-none">
-            {stats.pending.toString().padStart(2, "0")}
-          </p>
-          <p className="text-[10px] font-black uppercase tracking-widest text-gray-500 mt-2">Pending verification queue</p>
-        </button>
-
-        <button
-          onClick={() => {
-            setActiveTab("APPROVED");
-            fetchHistory();
-          }}
-          className={`p-6 rounded-2xl border-4 border-black text-left transition-all shadow-[4px_4px_0px_0px_black] hover:-translate-y-1 hover:shadow-[8px_8px_0px_0px_black] ${activeTab === "APPROVED"
-              ? "bg-[#E8F5E9]"
-              : "bg-gray-100 opacity-80"
-            }`}
-        >
-          <div className="flex items-center justify-between">
-            <span className="text-[10px] font-sans uppercase tracking-widest font-black text-black">
-              Campus Verified
-            </span>
-            <CheckCircle2 className="w-5 h-5 text-black" strokeWidth={3} />
-          </div>
-          <p className="text-5xl sm:text-6xl font-display font-black text-black mt-4 leading-none">
-            {stats.approved.toString().padStart(2, "0")}
-          </p>
-          <p className="text-[10px] font-black uppercase tracking-widest text-gray-500 mt-2">Certified events audit</p>
-        </button>
-
-        <button
-          onClick={() => {
-            setActiveTab("DECLINED");
-            fetchHistory();
-          }}
-          className={`p-6 rounded-2xl border-4 border-black text-left transition-all shadow-[4px_4px_0px_0px_black] hover:-translate-y-1 hover:shadow-[8px_8px_0px_0px_black] ${activeTab === "DECLINED"
-              ? "bg-[#FDEAE7]"
-              : "bg-gray-100 opacity-80"
-            }`}
-        >
-          <div className="flex items-center justify-between">
-            <span className="text-[10px] font-sans uppercase tracking-widest font-black text-[#E5391F]">
-              Declined Submissions
-            </span>
-            <XCircle className="w-5 h-5 text-[#E5391F]" strokeWidth={3} />
-          </div>
-          <p className="text-5xl sm:text-6xl font-display font-black text-[#E5391F] mt-4 leading-none">
-            {stats.declined.toString().padStart(2, "0")}
-          </p>
-          <p className="text-[10px] font-black uppercase tracking-widest text-gray-500 mt-2">Declined with feedback log</p>
-        </button>
+      <div className="mb-6 flex flex-wrap gap-2" aria-label="Submission status">
+        {([
+          { id: "PENDING", label: "Needs review", count: stats.pending },
+          { id: "APPROVED", label: "Published", count: stats.approved },
+          { id: "DECLINED", label: "Declined", count: stats.declined },
+        ] as const).map(({ id, label, count }) => (
+          <button key={id} type="button" aria-pressed={activeTab === id}
+            className="btn site-secondary aria-pressed:border-rose-700 aria-pressed:bg-rose-50 dark:aria-pressed:bg-rose-950"
+            onClick={() => { setActiveTab(id); if (id !== "PENDING") fetchHistory(); }}>
+            {label} <span className="tabular-nums">{count}</span>
+          </button>
+        ))}
       </div>
 
       {/* Main Verification Studio & Views */}
@@ -354,7 +302,7 @@ export default function CampusManagerVerificationQueue() {
             <div className="w-12 h-12 rounded-full bg-kalvium-success-tint border border-kalvium-success-border text-kalvium-success flex items-center justify-center mx-auto mb-3">
               <CheckCircle2 className="w-6 h-6" />
             </div>
-            <h3 className="text-lg font-display font-black text-kalvium-ink dark:text-kalvium-dark-ink mb-1">Verification Queue is Clear</h3>
+            <h3 className="text-balance text-lg font-display font-bold text-kalvium-ink dark:text-kalvium-dark-ink mb-1">Verification Queue is Clear</h3>
             <p className="text-xs text-kalvium-muted dark:text-kalvium-dark-muted mb-4">
               All submitted campus event posters have been certified. New submissions from student organizers will appear here immediately.
             </p>
@@ -369,47 +317,39 @@ export default function CampusManagerVerificationQueue() {
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
             {/* Left Column: Queue List (Select an event to inspect) */}
             <div className="lg:col-span-4 space-y-3">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-[10px] font-sans uppercase tracking-widest text-black font-black">
-                  Queue ({pendingEvents.length} Pending)
-                </span>
-                <span className="text-[10px] font-black text-[#E5391F] uppercase tracking-widest">Click to Inspect</span>
-              </div>
+              <h2 className="site-muted text-sm font-semibold">Pending submissions</h2>
 
               <div className="space-y-3 max-h-[750px] overflow-y-auto pr-1">
-                {pendingEvents.map((event: any, idx: number) => {
+                {pendingEvents.map((event: any) => {
                   const isSelected = selectedEvent?.id === event.id;
                   return (
-                    <div
+                    <button type="button"
                       key={event.id}
                       onClick={() => selectEventForReview(event)}
-                      className={`p-5 rounded-2xl border-4 border-black cursor-pointer transition-all duration-200 ease-out-expo animate-slide-up stagger-${(idx % 4) + 1} ${isSelected
-                          ? "bg-[#FDEAE7] scale-[1.01]"
-                          : "bg-white shadow-[2px_2px_0px_0px_black] hover:-translate-y-1 hover:shadow-[4px_4px_0px_0px_black]"
-                        }`}
+                      aria-pressed={isSelected}
+                      className="site-surface w-full p-4 text-left hover:border-rose-700 aria-pressed:border-rose-700 aria-pressed:bg-rose-50 dark:aria-pressed:bg-rose-950"
                     >
                       <div className="flex items-start gap-3">
-                        <img
-                          src={event.posterUrl}
+                        <EventPhoto posterUrl={event.posterUrl} category={event.category}
                           alt={event.title}
-                          className="w-16 h-16 rounded-xl object-cover bg-gray-100 shrink-0 border-2 border-black"
+                          className="size-14 shrink-0 rounded-lg object-cover"
                         />
                         <div className="min-w-0 flex-1">
-                          <span className="text-[10px] font-sans font-black uppercase tracking-widest text-[#E5391F] block mb-1">
+                          <span className="site-link mb-1 block text-xs font-medium">
                             {event.category}
                           </span>
-                          <h4 className="text-lg font-display font-black uppercase tracking-tighter text-black truncate mb-1 leading-none">
+                          <h4 className="text-balance text-base font-semibold">
                             {event.title}
                           </h4>
-                          <div className="text-[10px] text-black font-bold uppercase tracking-widest space-y-0.5 mt-2">
+                          <div className="site-muted mt-1 space-y-0.5 text-xs">
                             <p>{event.date} • {event.startTime}</p>
-                            <p className="truncate text-kalvium-ink/80 dark:text-kalvium-dark-ink/80 font-medium">
+                            <p className="truncate">
                               By {event.organizerName || event.organizer?.name}
                             </p>
                           </div>
                         </div>
                       </div>
-                    </div>
+                    </button>
                   );
                 })}
               </div>
@@ -418,14 +358,14 @@ export default function CampusManagerVerificationQueue() {
             {/* Right Column: Signature Side-By-Side Verification Studio */}
             <div className="lg:col-span-8">
               {selectedEvent ? (
-                <div className="bg-white border-4 border-black rounded-3xl p-6 space-y-6 shadow-[8px_8px_0px_0px_black]">
+                <div className="bg-white border border-neutral-300 dark:border-neutral-700 rounded-3xl p-6 space-y-6 shadow-sm">
                   {/* Studio Header & Certification Disclaimer */}
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b-4 border-black">
                     <div>
                       <span className="text-[10px] font-sans uppercase tracking-widest text-black font-black bg-[#FFF8E1] px-3 py-1 rounded-full border-2 border-black">
                         Pending Manager Certification
                       </span>
-                      <h2 className="text-3xl font-display font-black uppercase tracking-tighter text-black mt-4 leading-none">
+                      <h2 className="text-balance text-3xl font-display font-bold text-black mt-4 leading-none">
                         {selectedEvent.title}
                       </h2>
                       <p className="text-xs text-kalvium-muted dark:text-kalvium-dark-muted">
@@ -436,9 +376,9 @@ export default function CampusManagerVerificationQueue() {
                     <div className="flex items-center gap-2">
                       <button
                         onClick={() => setIsEditing(!isEditing)}
-                        className={`px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest flex items-center gap-1.5 transition border-2 border-black shadow-[2px_2px_0px_0px_black] ${isEditing
+                        className={`px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest flex items-center gap-1.5 transition border-2 border-black shadow-sm ${isEditing
                             ? "bg-black text-white shadow-none translate-y-0.5"
-                            : "bg-white border-2 border-black shadow-[2px_2px_0px_0px_black] text-kalvium-ink dark:text-kalvium-dark-ink hover:border-kalvium-coral"
+                            : "bg-white border-2 border-black shadow-sm text-kalvium-ink dark:text-kalvium-dark-ink hover:border-kalvium-coral"
                           }`}
                       >
                         <Edit3 className="w-3.5 h-3.5" />
@@ -465,7 +405,7 @@ export default function CampusManagerVerificationQueue() {
                           Original Poster Truth
                         </span>
                         <a
-                          href={selectedEvent.posterUrl}
+                          href={eventArtwork(selectedEvent.posterUrl, selectedEvent.category)}
                           target="_blank"
                           rel="noreferrer"
                           className="text-[10px] font-black text-[#E5391F] uppercase tracking-widest hover:underline flex items-center gap-1"
@@ -474,9 +414,8 @@ export default function CampusManagerVerificationQueue() {
                         </a>
                       </div>
 
-                      <div className="rounded-2xl overflow-hidden bg-white border-2 border-black shadow-[2px_2px_0px_0px_black] shadow-soft-sm group relative">
-                        <img
-                          src={selectedEvent.posterUrl}
+                      <div className="rounded-2xl overflow-hidden bg-white border-2 border-black shadow-sm shadow-soft-sm group relative">
+                        <EventPhoto posterUrl={selectedEvent.posterUrl} category={selectedEvent.category}
                           alt="Original Poster"
                           className="w-full h-auto object-cover max-h-[480px] transition-transform duration-500 ease-out-expo group-hover:scale-[1.02] will-change-transform"
                         />
@@ -508,10 +447,10 @@ export default function CampusManagerVerificationQueue() {
                             onChange={(e) =>
                               setEditableFields({ ...editableFields, title: e.target.value })
                             }
-                            className="w-full bg-white border-2 border-black shadow-[2px_2px_0px_0px_black] rounded-xl px-4 py-3 text-[10px] font-black uppercase tracking-widest text-black focus:outline-none"
+                            className="w-full bg-white border-2 border-black shadow-sm rounded-xl px-4 py-3 text-[10px] font-black uppercase tracking-widest text-black focus:outline-none"
                           />
                         ) : (
-                          <p className="p-2.5 rounded-xl bg-white border-2 border-black shadow-[2px_2px_0px_0px_black] text-[10px] font-black uppercase tracking-widest text-black">
+                          <p className="p-2.5 rounded-xl bg-white border-2 border-black shadow-sm text-[10px] font-black uppercase tracking-widest text-black">
                             {selectedEvent.title}
                           </p>
                         )}
@@ -530,10 +469,10 @@ export default function CampusManagerVerificationQueue() {
                             onChange={(e) =>
                               setEditableFields({ ...editableFields, date: e.target.value })
                             }
-                            className="w-full bg-white border-2 border-black shadow-[2px_2px_0px_0px_black] rounded-xl px-4 py-3 text-[10px] font-black uppercase tracking-widest text-black focus:outline-none"
+                            className="w-full bg-white border-2 border-black shadow-sm rounded-xl px-4 py-3 text-[10px] font-black uppercase tracking-widest text-black focus:outline-none"
                           />
                         ) : (
-                          <p className="p-2.5 rounded-xl bg-white border-2 border-black shadow-[2px_2px_0px_0px_black] text-[10px] font-black uppercase tracking-widest text-black">
+                          <p className="p-2.5 rounded-xl bg-white border-2 border-black shadow-sm text-[10px] font-black uppercase tracking-widest text-black">
                             {selectedEvent.date}
                           </p>
                         )}
@@ -601,10 +540,10 @@ export default function CampusManagerVerificationQueue() {
                             onChange={(e) =>
                               setEditableFields({ ...editableFields, venue: e.target.value })
                             }
-                            className="w-full bg-white border-2 border-black shadow-[2px_2px_0px_0px_black] rounded-xl px-4 py-3 text-[10px] font-black uppercase tracking-widest text-black"
+                            className="w-full bg-white border-2 border-black shadow-sm rounded-xl px-4 py-3 text-[10px] font-black uppercase tracking-widest text-black"
                           />
                         ) : (
-                          <p className="p-2.5 rounded-xl bg-white border-2 border-black shadow-[2px_2px_0px_0px_black] text-[10px] font-black uppercase tracking-widest text-black">
+                          <p className="p-2.5 rounded-xl bg-white border-2 border-black shadow-sm text-[10px] font-black uppercase tracking-widest text-black">
                             {selectedEvent.venue}
                           </p>
                         )}
@@ -645,7 +584,7 @@ export default function CampusManagerVerificationQueue() {
                   </div>
 
                   {/* Description & Summary Section */}
-                  <div className="p-4 rounded-2xl bg-white border-2 border-black shadow-[2px_2px_0px_0px_black] space-y-2">
+                  <div className="p-4 rounded-2xl bg-white border-2 border-black shadow-sm space-y-2">
                     <span className="text-[10px] font-sans uppercase tracking-widest text-black font-black block">
                       Generated Description (Anti-Hallucination Checked)
                     </span>
@@ -676,7 +615,7 @@ export default function CampusManagerVerificationQueue() {
                       <button
                         onClick={() => setDeclineModalOpen(true)}
                         disabled={actionLoading}
-                        className="flex-1 sm:flex-initial px-6 py-3 rounded-full text-[10px] uppercase tracking-widest font-black text-black bg-white hover:bg-black hover:text-white border-2 border-black shadow-[4px_4px_0px_0px_black] transition-all duration-200 active:scale-95"
+                        className="flex-1 sm:flex-initial px-6 py-3 rounded-full text-[10px] uppercase tracking-widest font-black text-black bg-white hover:bg-black hover:text-white border-2 border-black shadow-sm transition-all duration-200 active:scale-95"
                       >
                         Decline Event...
                       </button>
@@ -685,7 +624,7 @@ export default function CampusManagerVerificationQueue() {
                       <button
                         onClick={handleApprove}
                         disabled={actionLoading}
-                        className="flex-1 sm:flex-initial px-8 py-3 rounded-full text-[10px] uppercase tracking-widest font-black text-white bg-[#10B981] hover:bg-black border-2 border-black shadow-[4px_4px_0px_0px_black] transition-all duration-200 active:scale-95 flex items-center justify-center gap-2"
+                        className="flex-1 sm:flex-initial px-8 py-3 rounded-full text-[10px] uppercase tracking-widest font-black text-white bg-[#10B981] hover:bg-black border-2 border-black shadow-sm transition-all duration-200 active:scale-95 flex items-center justify-center gap-2"
                       >
                         <CheckCircle2 className="w-4 h-4 text-white" />
                         <span>{isEditing ? "Save Edits & Approve" : "Approve Event (Stamp Verified)"}</span>
@@ -726,8 +665,7 @@ export default function CampusManagerVerificationQueue() {
                       className="p-5 rounded-2xl bg-white dark:bg-kalvium-dark-surface border border-kalvium-success-border/60 hover:border-kalvium-success shadow-soft-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-all duration-200"
                     >
                       <div className="flex items-start gap-4 min-w-0">
-                        <img
-                          src={entry.event?.posterUrl || "/images/placeholder.svg"}
+                        <EventPhoto posterUrl={entry.event?.posterUrl} category={entry.event?.category}
                           alt={entry.event?.title || "Event"}
                           className="w-16 h-16 rounded-xl object-cover bg-kalvium-surface-alt dark:bg-kalvium-dark-surface-alt shrink-0 border border-kalvium-border dark:border-kalvium-dark-border"
                         />
@@ -794,8 +732,7 @@ export default function CampusManagerVerificationQueue() {
                   >
                     <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
                       <div className="flex items-start gap-4 min-w-0">
-                        <img
-                          src={entry.event?.posterUrl || "/images/placeholder.svg"}
+                        <EventPhoto posterUrl={entry.event?.posterUrl} category={entry.event?.category}
                           alt={entry.event?.title || "Event"}
                           className="w-16 h-16 rounded-xl object-cover bg-kalvium-surface-alt dark:bg-kalvium-dark-surface-alt shrink-0 border border-kalvium-border dark:border-kalvium-dark-border opacity-60"
                         />
@@ -841,7 +778,7 @@ export default function CampusManagerVerificationQueue() {
       )}
 
       {/* Decline Reason Modal */}
-      {selectedEvent && (
+      {selectedEvent && declineModalOpen && (
         <DeclineReasonModal
           isOpen={declineModalOpen}
           onClose={() => setDeclineModalOpen(false)}

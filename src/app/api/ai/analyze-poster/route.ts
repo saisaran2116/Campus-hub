@@ -1,67 +1,52 @@
+import { detectDuplicateEvent } from "@/lib/event-duplicates";
 import { NextRequest, NextResponse } from "next/server";
-import { analyzeEventPoster, detectDuplicateEvent } from "@/lib/ai-poster-analyzer";
-import { getAuthUser } from "@/lib/auth";
+import { z } from "zod";
+import { analyzeEventPoster, PosterAnalysisUnavailable } from "@/lib/ai-poster-analyzer";
+import { SAMPLE_POSTERS } from "@/lib/poster-samples";
+import { withinRateLimit } from "@/lib/redis";
+import { requireAuth } from "@/lib/auth";
+
+const analysisRequest = z.object({
+  sampleId: z.string().optional(),
+  imageData: z.string().optional(),
+  mimeType: z.enum(["image/png", "image/jpeg", "image/webp", "image/gif"]).optional(),
+});
 
 export async function POST(req: NextRequest) {
+  const auth = await requireAuth(req, ["ORGANIZER", "CAMPUS_MANAGER"]);
+  if ("errorResponse" in auth) return auth.errorResponse;
+
+  const parsed = analysisRequest.safeParse(await req.json().catch(() => null));
+  if (!parsed.success) {
+    return NextResponse.json({ error: "Submit a valid poster image or sample." }, { status: 400 });
+  }
+
+  const { sampleId, imageData, mimeType } = parsed.data;
+  if (imageData && imageData.length > 8 * 1024 * 1024 + 24) {
+    return NextResponse.json({ error: "Poster exceeds the 6 MB limit." }, { status: 413 });
+  }
+  const sample = sampleId && SAMPLE_POSTERS.some(({ id }) => id === sampleId);
+  const imageMatch = imageData?.match(/^data:(image\/(?:png|jpeg|webp|gif));base64,([A-Za-z0-9+/]+={0,2})$/);
+  if (sampleId ? !sample : !imageMatch || (mimeType && mimeType !== imageMatch[1])) {
+    return NextResponse.json({ error: "Select a sample or upload a PNG, JPEG, WebP, or GIF poster." }, { status: 400 });
+  }
+
   try {
-    const auth = await getAuthUser(req);
-    // Organizers or Managers can run AI poster extraction
-    if (!auth || (auth.role !== "ORGANIZER" && auth.role !== "CAMPUS_MANAGER")) {
-      return NextResponse.json(
-        { error: "Only organizers or campus managers can analyze event posters." },
-        { status: 403 }
-      );
+    if (!sample && process.env.REDIS_URL && !await withinRateLimit("poster", auth.user.userId, 8)) {
+      return NextResponse.json({ error: "Poster analysis limit reached. Try again in a minute." }, {
+        status: 429, headers: { "Retry-After": "60" },
+      });
     }
 
-    const body = await req.json();
-    const { sampleId, imageData, mimeType, posterUrl } = body;
-
-    if (!sampleId && !imageData && !posterUrl) {
-      return NextResponse.json(
-        { error: "No poster provided. Please upload an image or select a sample poster." },
-        { status: 400 }
-      );
-    }
-
-    if (imageData && typeof imageData === "string" && imageData.length > 8 * 1024 * 1024) {
-      return NextResponse.json(
-        { error: "Image size exceeds 6MB limit. Please upload a smaller image file." },
-        { status: 413 }
-      );
-    }
-
-    if (posterUrl && typeof posterUrl === "string" && posterUrl.length > 8 * 1024 * 1024) {
-      return NextResponse.json(
-        { error: "Poster URL payload exceeds size limit." },
-        { status: 413 }
-      );
-    }
-
-    // Run AI poster analysis
-    const extractedData = await analyzeEventPoster(
-      imageData || posterUrl || "",
-      mimeType || "image/png",
-      sampleId
-    );
-
-    // Run duplicate event detection
-    const duplicateCheck = await detectDuplicateEvent(
-      extractedData.title,
-      extractedData.date,
-      extractedData.startTime,
-      extractedData.venue
-    );
-
-    return NextResponse.json({
-      success: true,
-      extractedData,
-      duplicateCheck,
-    });
+    const extractedData = await analyzeEventPoster(imageData ?? "", imageMatch?.[1] ?? "image/png", sampleId);
+    const { title, date, startTime, venue } = extractedData;
+    const duplicateCheck = await detectDuplicateEvent(title, date, startTime, venue);
+    return NextResponse.json({ success: true, extractedData, duplicateCheck });
   } catch (error) {
-    console.error("AI poster analysis route error:", error);
-    return NextResponse.json(
-      { error: "AI analysis could not process the poster. Please review fields manually." },
-      { status: 500 }
-    );
+    if (error instanceof PosterAnalysisUnavailable) {
+      return NextResponse.json({ error: error.message }, { status: 503 });
+    }
+    console.error("Poster analysis failed", error);
+    return NextResponse.json({ error: "Unable to analyze the poster." }, { status: 500 });
   }
 }

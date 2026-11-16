@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { parseTimeToMinutes } from "@/lib/clash";
 import { formatLocalDate } from "@/lib/time";
@@ -27,7 +28,7 @@ export async function GET(req: NextRequest) {
     const nextWeekStr = formatLocalDate(nextWeek);
 
     // Build Prisma query condition
-    const where: any = {
+    const where: Prisma.EventWhereInput = {
       status: "APPROVED", // Mandatory security rule: ONLY APPROVED events are public
     };
 
@@ -36,7 +37,7 @@ export async function GET(req: NextRequest) {
     }
 
     if (venue && venue !== "ALL") {
-      where.venue = { contains: venue };
+      where.venue = { contains: venue, mode: "insensitive" };
     }
 
     if (dateFilter === "TODAY") {
@@ -63,17 +64,18 @@ export async function GET(req: NextRequest) {
     // Push text search down to SQL if query parameter exists
     if (query) {
       where.OR = [
-        { title: { contains: query } },
-        { organizerName: { contains: query } },
-        { venue: { contains: query } },
-        { category: { contains: query } },
-        { summary: { contains: query } },
-        { tags: { contains: query } },
+        { title: { contains: query, mode: "insensitive" } },
+        { organizerName: { contains: query, mode: "insensitive" } },
+        { venue: { contains: query, mode: "insensitive" } },
+        { category: { contains: query, mode: "insensitive" } },
+        { summary: { contains: query, mode: "insensitive" } },
+        { tags: { contains: query, mode: "insensitive" } },
+        { organizer: { name: { contains: query, mode: "insensitive" } } },
       ];
     }
 
     // Fetch matching approved events
-    let events = await prisma.event.findMany({
+    const events = await prisma.event.findMany({
       where,
       include: {
         organizer: {
@@ -99,20 +101,6 @@ export async function GET(req: NextRequest) {
           ? { date: "desc" }
           : { date: "asc" },
     });
-
-    // Secondary in-memory search for organizer email/name matches if needed
-    if (query) {
-      events = events.filter((e) => {
-        return (
-          e.title.toLowerCase().includes(query) ||
-          (e.organizerName && e.organizerName.toLowerCase().includes(query)) ||
-          e.organizer.name.toLowerCase().includes(query) ||
-          e.venue.toLowerCase().includes(query) ||
-          e.category.toLowerCase().includes(query) ||
-          e.summary.toLowerCase().includes(query)
-        );
-      });
-    }
 
     // Sort by soonest (date + startTime)
     if (sortBy === "soonest") {
@@ -149,3 +137,5 @@ export async function GET(req: NextRequest) {
     );
   }
 }
+
+export { submitEvent as POST } from "@/lib/event-submission";

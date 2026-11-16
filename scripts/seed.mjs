@@ -12,12 +12,9 @@ function getRelativeDateStr(daysOffset) {
 async function main() {
   console.log("🌱 Seeding Campus Event Hub database...");
 
-  // Clean existing tables
-  await prisma.approvalHistory.deleteMany();
-  await prisma.eventAnalysis.deleteMany();
-  await prisma.savedEvent.deleteMany();
-  await prisma.event.deleteMany();
-  await prisma.user.deleteMany();
+  if (await prisma.user.count()) {
+    throw new Error("Demo seeding requires an empty database. Use a separate development database.");
+  }
 
   const passwordHash = await bcrypt.hash("demo12345", 10);
 

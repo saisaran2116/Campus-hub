@@ -1,20 +1,24 @@
+import { z } from "zod";
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/auth";
-import { detectDuplicateEvent } from "@/lib/ai-poster-analyzer";
-import { checkTwoEventsClash } from "@/lib/clash";
+import { detectDuplicateEvent } from "@/lib/event-duplicates";
+import { checkTwoEventsClash, nearbyDates } from "@/lib/clash";
 
 export async function POST(req: NextRequest) {
   try {
     const authResult = await requireAuth(req, ["ORGANIZER", "CAMPUS_MANAGER"]);
     if ("errorResponse" in authResult) return authResult.errorResponse;
 
-    const body = await req.json();
-    const { title = "", date = "", startTime = "", endTime = "", venue = "" } = body;
-
-    if (!date) {
-      return NextResponse.json({ hasConflict: false });
-    }
+    const input = z.object({
+      title: z.string().max(240),
+      date: z.string().date(),
+      startTime: z.string().max(30),
+      endTime: z.string().max(30).optional(),
+      venue: z.string().max(240),
+    }).safeParse(await req.json().catch(() => null));
+    if (!input.success) return NextResponse.json({ error: "Invalid event details." }, { status: 400 });
+    const { title, date, startTime, endTime, venue } = input.data;
 
     // Check 1: Duplicate title or exact same start time at venue
     const duplicateCheck = await detectDuplicateEvent(title, date, startTime, venue);
@@ -29,9 +33,9 @@ export async function POST(req: NextRequest) {
 
     // Check 2: Venue schedule collision (overlapping time slots at same venue)
     if (venue && venue.trim() !== "Not specified" && startTime && endTime) {
-      const sameDateVenueEvents = await prisma.event.findMany({
+      const nearbyVenueEvents = await prisma.event.findMany({
         where: {
-          date,
+          date: { in: nearbyDates(date) },
           status: { in: ["APPROVED", "PENDING"] },
         },
         select: {
@@ -52,7 +56,7 @@ export async function POST(req: NextRequest) {
         venue,
       };
 
-      for (const existing of sameDateVenueEvents) {
+      for (const existing of nearbyVenueEvents) {
         // Compare venue similarity
         const vA = venue.toLowerCase().trim();
         const vB = existing.venue.toLowerCase().trim();
@@ -78,6 +82,6 @@ export async function POST(req: NextRequest) {
     });
   } catch (error) {
     console.error("Organizer check-conflicts error:", error);
-    return NextResponse.json({ hasConflict: false });
+    return NextResponse.json({ error: "Unable to check for event conflicts." }, { status: 500 });
   }
 }

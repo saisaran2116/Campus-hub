@@ -1,20 +1,12 @@
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "./prisma";
 
 function getJwtSecret(): string {
   const secret = process.env.JWT_SECRET;
-  if (!secret) {
-    if (process.env.NODE_ENV === "production") {
-      throw new Error("FATAL: JWT_SECRET environment variable must be configured in production.");
-    }
-    return "campus_event_hub_secure_key_2026_secret";
-  }
+  if (!secret) throw new Error("Set JWT_SECRET before signing or verifying sessions.");
   return secret;
 }
-
-const JWT_SECRET = getJwtSecret();
 
 /**
  * Validates whether a URL is a safe HTTP/HTTPS URL or allowed internal path.
@@ -63,12 +55,12 @@ export interface TokenPayload {
 }
 
 export function signToken(payload: TokenPayload): string {
-  return jwt.sign(payload, JWT_SECRET, { expiresIn: "7d" });
+  return jwt.sign(payload, getJwtSecret(), { algorithm: "HS256", expiresIn: "7d" });
 }
 
 export function verifyToken(token: string): TokenPayload | null {
   try {
-    return jwt.verify(token, JWT_SECRET) as TokenPayload;
+    return jwt.verify(token, getJwtSecret(), { algorithms: ["HS256"] }) as TokenPayload;
   } catch {
     return null;
   }
@@ -184,3 +176,11 @@ export const DEMO_ACCOUNTS = {
     avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&auto=format&fit=crop&q=80",
   },
 };
+
+export function isDemoEmail(email: string) {
+  return Object.values(DEMO_ACCOUNTS).some((account) => account.email === email);
+}
+
+export function demoEnabled() {
+  return process.env.NEXT_PUBLIC_DEMO_MODE === "true" && process.env.DEMO_MODE !== "false";
+}

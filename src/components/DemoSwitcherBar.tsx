@@ -1,91 +1,40 @@
 "use client";
 
-import React, { useState } from "react";
+import { useState } from "react";
 import { useAuth } from "@/context/AuthContext";
-import { Shield, User, GraduationCap, ChevronUp, ChevronDown } from "lucide-react";
+
+const roles = [
+  ["STUDENT", "Student"],
+  ["ORGANIZER", "Organizer"],
+  ["CAMPUS_MANAGER", "Manager"],
+] as const;
 
 export default function DemoSwitcherBar() {
   const { user, demoLogin, loading } = useAuth();
-  const [collapsed, setCollapsed] = useState(false);
+  const [error, setError] = useState("");
+  if (process.env.NEXT_PUBLIC_DEMO_MODE !== "true") return null;
 
-  // If in production mode, hide completely
-  if (process.env.NEXT_PUBLIC_DEMO_MODE === "false") {
-    return null;
+  async function switchRole(role: typeof roles[number][0]) {
+    setError("");
+    try {
+      await demoLogin(role);
+    } catch {
+      setError("Could not switch accounts.");
+    }
   }
 
   return (
-    <div className="bg-[#E5391F] border-b-4 border-black py-3 px-4 transition-colors relative z-50">
-      <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <span className="inline-flex items-center gap-2 font-black uppercase tracking-widest text-[10px] text-white bg-black px-3 py-1.5 border-2 border-black shadow-[2px_2px_0px_0px_black]">
-            <span className="w-2 h-2 rounded-full bg-[#E5391F] animate-pulse border border-black" />
-            <span>Demo Mode</span>
-          </span>
-          {!collapsed && (
-            <span className="hidden md:inline text-[10px] font-black uppercase tracking-widest text-black">
-              Select role to test
-            </span>
-          )}
-        </div>
-
-        {!collapsed ? (
-          <div className="flex items-center gap-4 flex-wrap">
-            {/* Student Switcher */}
-            <button
-              onClick={() => demoLogin("STUDENT")}
-              disabled={loading}
-              className={`flex items-center gap-2 px-4 py-2 border-2 border-black text-[10px] font-black uppercase tracking-widest transition-all duration-200 select-none ${user?.role === "STUDENT"
-                  ? "bg-white text-black shadow-none translate-y-[4px] translate-x-[4px]"
-                  : "bg-black text-white shadow-[4px_4px_0px_0px_black] hover:shadow-[2px_2px_0px_0px_black] hover:translate-y-[2px] hover:translate-x-[2px]"
-                }`}
-            >
-              <GraduationCap className="w-4 h-4" />
-              <span>Student</span>
-            </button>
-
-            {/* Organizer Switcher */}
-            <button
-              onClick={() => demoLogin("ORGANIZER")}
-              disabled={loading}
-              className={`flex items-center gap-2 px-4 py-2 border-2 border-black text-[10px] font-black uppercase tracking-widest transition-all duration-200 select-none ${user?.role === "ORGANIZER"
-                  ? "bg-white text-black shadow-none translate-y-[4px] translate-x-[4px]"
-                  : "bg-black text-white shadow-[4px_4px_0px_0px_black] hover:shadow-[2px_2px_0px_0px_black] hover:translate-y-[2px] hover:translate-x-[2px]"
-                }`}
-            >
-              <User className="w-4 h-4" />
-              <span>Organizer</span>
-            </button>
-
-            {/* Campus Manager Switcher */}
-            <button
-              onClick={() => demoLogin("CAMPUS_MANAGER")}
-              disabled={loading}
-              className={`flex items-center gap-2 px-4 py-2 border-2 border-black text-[10px] font-black uppercase tracking-widest transition-all duration-200 select-none ${user?.role === "CAMPUS_MANAGER"
-                  ? "bg-white text-black shadow-none translate-y-[4px] translate-x-[4px]"
-                  : "bg-black text-white shadow-[4px_4px_0px_0px_black] hover:shadow-[2px_2px_0px_0px_black] hover:translate-y-[2px] hover:translate-x-[2px]"
-                }`}
-            >
-              <Shield className="w-4 h-4" />
-              <span>Manager</span>
-            </button>
-
-            <button
-              onClick={() => setCollapsed(true)}
-              className="text-black hover:text-white p-1 transition-colors ml-2 bg-transparent border-2 border-transparent hover:border-black hover:bg-black rounded-full shadow-none hover:shadow-[2px_2px_0px_0px_black]"
-              title="Minimize Demo Bar"
-            >
-              <ChevronUp className="w-5 h-5" />
-            </button>
-          </div>
-        ) : (
-          <button
-            onClick={() => setCollapsed(false)}
-            className="flex items-center gap-2 text-black bg-white hover:bg-black hover:text-white border-2 border-black shadow-[4px_4px_0px_0px_black] px-4 py-2 text-[10px] font-black uppercase tracking-widest transition-colors"
-          >
-            <span>Roles</span>
-            <ChevronDown className="w-4 h-4" />
+    <div className="border-b border-neutral-200 bg-neutral-100 dark:border-neutral-700 dark:bg-neutral-900">
+      <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-2 px-5 py-2 sm:px-8">
+        <span className="mr-2 text-sm font-semibold">Demo accounts</span>
+        {roles.map(([role, label]) => (
+          <button key={role} type="button" disabled={loading} aria-pressed={user?.role === role}
+            onClick={() => switchRole(role)}
+            className="btn btn-ghost btn-xs aria-pressed:bg-neutral-300 dark:aria-pressed:bg-neutral-700">
+            {label}
           </button>
-        )}
+        ))}
+        {error && <span role="alert" className="text-sm">{error}</span>}
       </div>
     </div>
   );
