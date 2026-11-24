@@ -5,10 +5,10 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState, type FormEvent } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { parseTimeToMinutes } from "@/lib/clash";
+import { imageTypes, readPoster } from "@/lib/read-poster";
 import { SAMPLE_POSTERS, type ExtractedEventData } from "@/lib/poster-samples";
 
 const categories = ["Workshop", "Hackathon", "Cultural", "Technical", "Sports", "Seminar", "Competition", "Club", "Fest"];
-const imageTypes = ["image/png", "image/jpeg", "image/webp", "image/gif"];
 const empty = {
   title: "", date: "", startTime: "", endTime: "", venue: "", organizerName: "",
   category: "Workshop", description: "", summary: "", tags: "", registrationUrl: "", contactInfo: "",
@@ -17,19 +17,6 @@ const empty = {
 type Form = typeof empty;
 type Confidence = ExtractedEventData["confidences"];
 type Mode = "AI" | "MANUAL";
-
-function readPoster(file: File) {
-  if (!imageTypes.includes(file.type) || file.size > 6 * 1024 * 1024) {
-    throw new Error("Choose a PNG, JPEG, WebP, or GIF image up to 6 MB.");
-  }
-  // Promises vs callbacks: adapt FileReader events so callers can await the result.
-  return new Promise<string>((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(String(reader.result));
-    reader.onerror = () => reject(new Error("Could not read the poster."));
-    reader.readAsDataURL(file);
-  });
-}
 
 function cleanField(value: string) {
   return value === "Not specified" || value === "Needs verification" ? "" : value;

@@ -22,7 +22,7 @@ export async function getUpcomingEvents(): Promise<UpcomingEvent[]> {
   const events = await prisma.$queryRaw<UpcomingEvent[]>`
     SELECT e.id, e.title, e.date, e.venue, e.category, e."posterUrl", u.name AS organizer
       FROM "Event" e
-      JOIN "User" u ON u.id = e."organizerId"
+      INNER JOIN "User" u ON u.id = e."organizerId"
      WHERE e.status = 'APPROVED' AND e.date >= ${date}
      ORDER BY e.date, e.id
      LIMIT 3

@@ -40,6 +40,7 @@ export default function EventsExplorePage() {
   const [savedEventIds, setSavedEventIds] = useState<Set<string>>(new Set());
   const userId = user?.id;
 
+  // Side effects with useEffect: synchronize saved events and abort stale requests.
   useEffect(() => {
     const controller = new AbortController();
     setSavedEventIds(new Set());
@@ -67,6 +68,7 @@ export default function EventsExplorePage() {
 
   useEffect(() => {
     const controller = new AbortController();
+    // Event loop: debounce schedules a timer task, then fetch resumes via Promises.
     const search = debounce(async () => {
       setLoading(true);
       setError(false);

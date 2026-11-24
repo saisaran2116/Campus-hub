@@ -29,13 +29,15 @@ All 25 mandatory topics have code or repository evidence. The 38 optional topics
 | Middleware | `src/lib/auth-middleware.ts`, invoked by `src/proxy.ts` | Protected draft/organizer/manager endpoints reject missing or invalid JWTs with HTTP 401. Next.js 16 names the middleware entry point Proxy. |
 | JavaScript closures | `src/lib/debounce.ts`, used by `src/app/events/page.tsx` | Each search debounce captures its own timer and callback. Rapid changes cancel previous scheduled requests. |
 | JavaScript event loop | `src/lib/debounce.ts`, `scripts/debounce.test.mjs` | Tests assert synchronous work, then Promise microtasks, then timer callbacks. The catalogue uses the timer for deferred search. |
-| JavaScript hoisting | `src/app/dashboard/manager/page.tsx` | Manager JSX calls the function declaration `renderConfidenceBadge` before its declaration appears in source. |
-| Promises vs callbacks | `src/components/CreateEventStudio.tsx` | `readPoster` wraps FileReader onload/onerror callbacks in a Promise. `importPoster` awaits it and handles failures. |
+| JavaScript hoisting | `src/lib/read-poster.ts`, `scripts/read-poster.test.mjs` | `readPoster` invokes the later function declaration `validatePoster`. Tests exercise both valid files and validation failures. Manager JSX also invokes the later declaration `renderConfidenceBadge`. |
+| Promises vs callbacks | `src/lib/read-poster.ts`, used by `src/components/CreateEventStudio.tsx` | `readPoster` wraps FileReader onload/onerror/onabort callbacks in a Promise. `importPoster` awaits it and handles failures. Tests cover all three callback outcomes. |
 | Side effects with useEffect | `src/app/events/page.tsx` | Effects load saved events, subscribe to WebSocket updates and debounce API search. Cleanup aborts requests, closes sockets and cancels timers. |
 | Mongo schema modeling | `src/lib/drafts.ts` | TypeScript document shape, Zod boundary validation, MongoDB $jsonSchema enforcement, embedded content, organizer reference and compound index. Existing collections receive the validator using collMod. |
 | SQL JOINs | `src/lib/upcoming-events.ts` | The homepage calls a parameterized SELECT joining Event.organizerId to User.id to display organizer names. |
 
 Run `npm test` for the closure/event-loop and scheduling tests. Mongo validation requires a configured MongoDB connection and createCollection/collMod permissions. Existing documents are preserved, and future writes must satisfy the validator.
+
+`scripts/mongo-schema.test.mjs` tests draft input validation and includes a live database check that rejects malformed inserts and updates. The live check skips when MONGODB_URI is absent. Run `node --env-file=.env --test scripts/mongo-schema.test.mjs` to include it. It creates and drops a uniquely named test collection, leaving application drafts intact.
 
 ## Runtime verification limits
 
