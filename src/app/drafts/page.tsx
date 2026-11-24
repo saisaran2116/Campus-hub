@@ -16,7 +16,7 @@ export default function DraftsPage() {
   const canEdit = user?.role === "ORGANIZER" || user?.role === "CAMPUS_MANAGER";
 
   return (
-    <div className="mx-auto max-w-6xl px-5 py-12 sm:px-8">
+    <div className="site-width py-10 sm:py-12">
       <h1 className="text-balance text-4xl font-bold">Event drafts</h1>
       <p className="mt-2 text-pretty text-neutral-600 dark:text-neutral-300">Keep private notes while you plan an event.</p>
       {loading ? <p className="mt-5" role="status">Checking your session…</p> : canEdit ? (

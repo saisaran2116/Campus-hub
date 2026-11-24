@@ -14,7 +14,7 @@ const config: Config = {
         kalvium: {
           ink: "#111111",
           "dark-ink": "#FFFFFF",
-          muted: "#777777",
+          muted: "#60605b",
           "dark-muted": "#AAAAAA",
           bg: "#F7F7F5",
           "dark-bg": "#111111",
@@ -30,7 +30,7 @@ const config: Config = {
           coral: {
             DEFAULT: "#D02020",
             hover: "#a31818",
-            tint: "#f0ede6"
+            tint: "#eeeeea"
           },
           success: {
             DEFAULT: "#10B981",

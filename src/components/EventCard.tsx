@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowUpRight, CalendarDays, Clock, MapPin } from "lucide-react";
+import { CalendarDays, Clock, MapPin } from "lucide-react";
 import EventPhoto from "./EventPhoto";
 import SaveEventButton from "./SaveEventButton";
 import { getHumanCountdown } from "@/lib/time";
@@ -34,7 +34,7 @@ export default function EventCard({ event, onSaveToggle }: {
   const href = `/events/${event.id}`;
 
   return (
-    <article className="site-surface flex h-full flex-col overflow-hidden">
+    <article className="site-surface event-card flex h-full flex-col overflow-hidden">
       <div className="aspect-[2/1] overflow-hidden bg-stone-200 dark:bg-stone-800">
         <EventPhoto posterUrl={event.posterUrl} category={event.category} className="size-full object-cover" />
       </div>
@@ -51,7 +51,7 @@ export default function EventCard({ event, onSaveToggle }: {
         <p className="site-muted mb-5 line-clamp-2 text-sm leading-relaxed">{event.summary}</p>
         <div className="mt-auto flex items-start justify-between gap-3 border-t border-stone-200 pt-4 dark:border-stone-800">
           <Link href={href} aria-label={`Details for ${event.title}`} className="site-link inline-flex items-center gap-1 py-1 text-sm font-semibold">
-            Details <ArrowUpRight size={15} aria-hidden="true" />
+            View event
           </Link>
           {event.status === "APPROVED" && <SaveEventButton eventId={event.id} title={event.title} compact
             saved={!!event.isSaved} onChange={(saved) => onSaveToggle(event.id, saved)} />}

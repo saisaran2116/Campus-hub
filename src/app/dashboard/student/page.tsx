@@ -67,10 +67,10 @@ export default function StudentDashboardPage() {
           <CampusVerifiedBadge size="sm" />
         </div>
         <h1 className="text-balance text-3xl sm:text-5xl font-display font-bold text-kalvium-ink dark:text-kalvium-dark-ink">
-          Good morning, {user.name.split(" ")[0]} 👋
+          Your campus, {user.name.split(" ")[0]}
         </h1>
         <p className="text-base text-kalvium-muted dark:text-kalvium-dark-muted mt-2">
-          Here's what's happening on your campus today.
+          Your saved events, upcoming plans, and schedule clashes.
         </p>
       </div>
 

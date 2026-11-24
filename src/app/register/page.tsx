@@ -32,7 +32,8 @@ export default function RegisterPage() {
 
   return (
     <div className="mx-auto max-w-md px-5 py-12 sm:py-16">
-      <h1 className="text-balance text-4xl font-bold">Create an account</h1>
+      <h1 className="text-balance text-4xl font-bold">Find your place.</h1>
+      <p className="site-muted mt-3">Create your CampusHub account to start planning.</p>
       <form onSubmit={submit} className="mt-6 grid gap-4 site-surface p-5 sm:p-6">
         <label className="grid gap-1 text-sm font-medium">
           Full name

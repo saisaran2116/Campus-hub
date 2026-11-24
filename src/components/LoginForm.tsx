@@ -37,7 +37,8 @@ export default function LoginForm({ googleEnabled, googleError, returnTo }: {
 
   return (
     <div className="mx-auto max-w-md px-5 py-12 sm:py-16">
-      <h1 className="text-balance text-4xl font-bold">Sign in</h1>
+      <h1 className="text-balance text-4xl font-bold">Welcome back.</h1>
+      <p className="site-muted mt-3">Sign in to save events and make your next campus plan.</p>
       <form onSubmit={submit} className="mt-6 grid gap-4 site-surface p-5 sm:p-6">
         <label className="grid gap-1 text-sm font-medium">
           Email
