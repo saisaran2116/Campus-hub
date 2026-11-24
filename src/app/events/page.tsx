@@ -1,5 +1,7 @@
 "use client";
 
+import { debounce } from "@/lib/debounce";
+
 import React, { useState, useEffect } from "react";
 import EventCard, { EventCardData } from "@/components/EventCard";
 import { useAuth } from "@/context/AuthContext";
@@ -65,7 +67,7 @@ export default function EventsExplorePage() {
 
   useEffect(() => {
     const controller = new AbortController();
-    const timer = setTimeout(async () => {
+    const search = debounce(async () => {
       setLoading(true);
       setError(false);
       const filters = new URLSearchParams({ sortBy });
@@ -84,9 +86,10 @@ export default function EventsExplorePage() {
         if (!controller.signal.aborted) setLoading(false);
       }
     }, 200);
+    search.run();
 
     return () => {
-      clearTimeout(timer);
+      search.cancel();
       controller.abort();
     };
   }, [searchQuery, selectedCategory, selectedDateFilter, sortBy, liveRevision]);

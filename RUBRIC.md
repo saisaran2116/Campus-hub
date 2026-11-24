@@ -22,7 +22,22 @@ All 25 mandatory topics have code or repository evidence. The 38 optional topics
 | SQL (5) | PostgreSQL filtering, ordering, grouping, indexes, normalized relations, Prisma ORM, and an atomic event decision and review history transaction. |
 | System & Integration (6) | Gemini and Google integrations, Redis caching, Stripe test checkout and signed webhook, a campus-midnight cron job, server-rendered homepage, and a Redis-backed WebSocket that signals catalogue updates. |
 
-## Verification limits
+## Explicit concept evidence
+
+| Concept | Production code | How to demonstrate |
+|---|---|---|
+| Middleware | `src/lib/auth-middleware.ts`, invoked by `src/proxy.ts` | Protected draft/organizer/manager endpoints reject missing or invalid JWTs with HTTP 401. Next.js 16 names the middleware entry point Proxy. |
+| JavaScript closures | `src/lib/debounce.ts`, used by `src/app/events/page.tsx` | Each search debounce captures its own timer and callback. Rapid changes cancel previous scheduled requests. |
+| JavaScript event loop | `src/lib/debounce.ts`, `scripts/debounce.test.mjs` | Tests assert synchronous work, then Promise microtasks, then timer callbacks. The catalogue uses the timer for deferred search. |
+| JavaScript hoisting | `src/app/dashboard/manager/page.tsx` | Manager JSX calls the function declaration `renderConfidenceBadge` before its declaration appears in source. |
+| Promises vs callbacks | `src/components/CreateEventStudio.tsx` | `readPoster` wraps FileReader onload/onerror callbacks in a Promise. `importPoster` awaits it and handles failures. |
+| Side effects with useEffect | `src/app/events/page.tsx` | Effects load saved events, subscribe to WebSocket updates and debounce API search. Cleanup aborts requests, closes sockets and cancels timers. |
+| Mongo schema modeling | `src/lib/drafts.ts` | TypeScript document shape, Zod boundary validation, MongoDB $jsonSchema enforcement, embedded content, organizer reference and compound index. Existing collections receive the validator using collMod. |
+| SQL JOINs | `src/lib/upcoming-events.ts` | The homepage calls a parameterized SELECT joining Event.organizerId to User.id to display organizer names. |
+
+Run `npm test` for the closure/event-loop and scheduling tests. Mongo validation requires a configured MongoDB connection and createCollection/collMod permissions. Existing documents are preserved, and future writes must satisfy the validator.
+
+## Runtime verification limits
 
 - Gemini poster samples pass without external calls. Run the opt-in live evaluation and try the event assistant after configuring a Gemini key. Token cost estimates cover generation using the configured rates.
 - Google login and Stripe test checkout require provider credentials and an appropriately configured callback or webhook. Code coverage does not establish a successful provider transaction.

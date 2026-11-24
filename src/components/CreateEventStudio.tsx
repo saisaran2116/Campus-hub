@@ -22,6 +22,7 @@ function readPoster(file: File) {
   if (!imageTypes.includes(file.type) || file.size > 6 * 1024 * 1024) {
     throw new Error("Choose a PNG, JPEG, WebP, or GIF image up to 6 MB.");
   }
+  // Promises vs callbacks: adapt FileReader events so callers can await the result.
   return new Promise<string>((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = () => resolve(String(reader.result));
@@ -267,7 +268,7 @@ export default function CreateEventStudio({ initialMode = "AI", onComplete }: {
           {conflict?.hasConflict && <p role="status" className="text-sm text-amber-800 dark:text-amber-300">{conflict.reason || "Check for a possible schedule conflict."}</p>}
           {conflictError && <p role="status" className="text-sm text-amber-800 dark:text-amber-300">Could not check the schedule. Confirm the venue and time before submitting.</p>}
           {error && <p role="alert" className="text-sm text-red-800 dark:text-red-300">{error}</p>}
-          <button className="btn justify-self-start border-0 bg-red-700 text-white hover:bg-red-800">
+          <button className="btn site-primary justify-self-start">
             {submitting ? "Submitting…" : "Submit for review"}
           </button>
         </fieldset>

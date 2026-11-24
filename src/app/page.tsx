@@ -15,7 +15,7 @@ export default async function LandingPage() {
 
   return (
     <>
-      <section className="border-b border-stone-200 dark:border-stone-800">
+      <section className="landing-hero border-b border-stone-200 dark:border-stone-800">
         <div className="site-width grid gap-8 py-9 sm:py-12 lg:grid-cols-[0.85fr_1.15fr] lg:items-center lg:gap-12">
           <div className="py-3 lg:py-8">
             <p className="mb-5 flex items-center gap-2 text-sm font-semibold text-rose-800 dark:text-rose-300">
@@ -34,9 +34,15 @@ export default async function LandingPage() {
               <Link href="/events/create" className="btn site-secondary">Submit an event</Link>
             </div>
           </div>
-          <div className="relative aspect-[5/3] overflow-hidden rounded-2xl bg-stone-200 sm:aspect-[3/2] dark:bg-stone-800">
-            <Image src="/images/campus-life.jpg" fill preload sizes="(min-width: 1024px) 640px, 94vw"
-              className="object-cover object-center" alt="Students chatting and studying on outdoor campus steps" />
+          <div className="landing-photo relative aspect-[3/2] overflow-hidden">
+            <Image
+              src="/images/campus-life.jpg"
+              alt="Students chatting and studying on outdoor campus steps"
+              fill
+              preload
+              sizes="(min-width: 1024px) 640px, 94vw"
+              className="object-cover"
+            />
           </div>
         </div>
       </section>

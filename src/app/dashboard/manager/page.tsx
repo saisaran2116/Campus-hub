@@ -790,6 +790,7 @@ export default function CampusManagerVerificationQueue() {
   );
 }
 
+// Function declaration hoisting allows the JSX above to call this helper.
 function renderConfidenceBadge(level?: ConfidenceLevel | string) {
   if (level === "MANUAL") {
     return (

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import React from "react";
 import "@fontsource-variable/outfit";
+import "@fontsource/barlow-condensed/latin-800.css";
 import "./globals.css";
 import { AuthProvider } from "@/context/AuthContext";
 import { ThemeProvider } from "@/context/ThemeContext";
@@ -27,7 +28,7 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body className="font-sans antialiased bg-[#f7f5f0] text-stone-900 dark:bg-[#141313] dark:text-stone-100 flex flex-col min-h-dvh selection:bg-[#E5391F] selection:text-white transition-colors duration-200">
+      <body className="font-sans antialiased flex flex-col min-h-dvh transition-colors duration-200">
         <AuthProvider>
           <ThemeProvider>
             <a href="#main-content" className="sr-only z-50 bg-white p-3 text-black focus:not-sr-only focus:absolute">

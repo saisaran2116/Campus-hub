@@ -282,7 +282,7 @@ function ScheduleItemCard({
 
           {/* Title */}
           <Link href={`/events/${event.id}`}>
-            <h3 className="text-balance font-display text-xl font-bold text-black group-hover:text-[#E5391F] transition-colors line-clamp-1 mb-2 leading-none">
+            <h3 className="text-balance font-display text-xl font-bold text-black group-hover:text-kalvium-coral transition-colors line-clamp-1 mb-2 leading-none">
               {event.title}
             </h3>
           </Link>

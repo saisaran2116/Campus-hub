@@ -2,14 +2,11 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Moon, Sun } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
-import { useTheme } from "@/context/ThemeContext";
 import KalviumLogo from "./KalviumLogo";
 
 export default function Navbar() {
   const { user, logout } = useAuth();
-  const { theme, toggleTheme } = useTheme();
   const pathname = usePathname();
 
   const links = [{ href: "/events", label: "Events" }];
@@ -39,10 +36,6 @@ export default function Navbar() {
           ))}
         </nav>
         <div className="flex items-center gap-3">
-          <button type="button" onClick={toggleTheme} aria-label={theme === "dark" ? "Use light theme" : "Use dark theme"}
-            className="btn btn-ghost btn-square btn-sm dark:hover:bg-neutral-800">
-            {theme === "dark" ? <Sun size={18} aria-hidden="true" /> : <Moon size={18} aria-hidden="true" />}
-          </button>
           {user ? (
             <button type="button" onClick={logout} className="btn btn-sm site-secondary">Sign out</button>
           ) : (

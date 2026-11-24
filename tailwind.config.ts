@@ -28,9 +28,9 @@ const config: Config = {
           "dark-warning-tint": "#382B14",
           "dark-success-tint": "#103026",
           coral: {
-            DEFAULT: "#EF321F",
-            hover: "#D13019",
-            tint: "#FDEAE7"
+            DEFAULT: "#D02020",
+            hover: "#a31818",
+            tint: "#f0ede6"
           },
           success: {
             DEFAULT: "#10B981",
@@ -71,7 +71,7 @@ const config: Config = {
       },
       fontFamily: {
         sans: ["Outfit Variable", "system-ui", "sans-serif"],
-        display: ["Outfit Variable", "system-ui", "sans-serif"],
+        display: ["Barlow Condensed", "Arial Narrow", "Arial", "sans-serif"],
         mono: ["var(--font-mono)", "JetBrains Mono", "SFMono-Regular", "Menlo", "monospace"],
       },
       fontSize: {
