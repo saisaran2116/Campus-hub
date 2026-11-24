@@ -2,6 +2,8 @@
 
 CampusHub lists events approved by campus staff. Students browse and save events, organizers submit events manually or use poster extraction, and managers review submissions. The schedule checks for overlapping events, including those that run past midnight.
 
+Implementation evidence for JavaScript scheduling, hoisting, Promises/callbacks, MongoDB modeling and indexes, SQL joins, sanitization, rate limiting, cron, and server-side rendering is documented with production source links and runnable checks in [LLD.md](LLD.md) and [RUBRIC.md](RUBRIC.md).
+
 ## Run locally
 
 Use Node.js 22+ and Docker Compose. In a new checkout:

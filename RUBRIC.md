@@ -41,6 +41,10 @@ Run `npm test` for the closure/event-loop and scheduling tests. Mongo validation
 
 ## Runtime verification limits
 
+The 2026-11-24 local verification ran the MongoDB schema/index tests and Redis concurrent quota tests against Docker services. All three live checks passed. All five HTTP workflow tests passed, including private draft CRUD, SQL schedule joins with and without a reviewer, and server-rendered homepage markup. The unit suite also verifies event-loop ordering, hoisted validation, FileReader callbacks, URL sanitization and the registered cron callback.
+
+The actual midnight wall-clock rollover has not been waited for, and external grading results are outside these checks.
+
 - Gemini poster samples pass without external calls. Run the opt-in live evaluation and try the event assistant after configuring a Gemini key. Token cost estimates cover generation using the configured rates.
 - Google login and Stripe test checkout require provider credentials and an appropriately configured callback or webhook. Code coverage does not establish a successful provider transaction.
 - The frontend and backend run in Docker locally. A public deployment requires a hosting target.

@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { analyzeEventPoster, PosterAnalysisUnavailable } from "@/lib/ai-poster-analyzer";
 import { SAMPLE_POSTERS } from "@/lib/poster-samples";
-import { withinRateLimit } from "@/lib/redis";
+import { getRedis, withinRateLimit } from "@/lib/redis";
 import { requireAuth } from "@/lib/auth";
 
 const analysisRequest = z.object({
@@ -32,7 +32,10 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    if (!sample && process.env.REDIS_URL && !await withinRateLimit("poster", auth.user.userId, 8)) {
+    if (!sample && !await getRedis()) {
+      return NextResponse.json({ error: "Poster analysis is temporarily unavailable." }, { status: 503 });
+    }
+    if (!sample && !await withinRateLimit("poster", auth.user.userId, 8)) {
       return NextResponse.json({ error: "Poster analysis limit reached. Try again in a minute." }, {
         status: 429, headers: { "Retry-After": "60" },
       });

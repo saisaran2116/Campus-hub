@@ -20,12 +20,22 @@ async function login(role) {
 test("public catalogue and server-rendered homepage", async () => {
   const home = await request("/");
   assert.equal(home.status, 200);
-  assert.match(await home.text(), /Upcoming events/);
+  const html = await home.text();
+  const rendered = html.replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, "");
+  assert.match(rendered, /Upcoming events/);
   const events = await request("/api/events?limit=3");
   assert.equal(events.status, 200);
   const data = await events.json();
   assert.ok(data.events.length > 0);
   assert.ok(data.events.every(({ status }) => status === "APPROVED"));
+  // SSR evidence must be actual HTML, excluding serialized React scripts.
+  const campusToday = new Intl.DateTimeFormat("en-CA", {
+    timeZone: process.env.CAMPUS_TIME_ZONE ?? "Asia/Kolkata",
+    year: "numeric", month: "2-digit", day: "2-digit",
+  }).format(new Date());
+  if (data.events.some(({ date }) => date >= campusToday)) {
+    assert.match(rendered, /<h3\b[^>]*>[^<]+<\/h3>/);
+  }
 });
 
 test("anonymous requests, role restrictions and malformed bodies", async () => {
@@ -117,6 +127,24 @@ test("event creation, approval and public discovery", async () => {
     const existing = await (await request(search)).json();
     assert.equal(existing.events[0].id, eventId);
     assert.equal(existing.events[0].status, "APPROVED");
+    const renderedHome = (await (await request("/")).text())
+      .replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, "");
+    assert.match(renderedHome, /<h3\b[^>]*>[^<]+<\/h3>/, "SSR includes upcoming event headings in HTML");
+
+    // SQL JOIN evidence through the real schedule API, including optional reviewer.
+    const student = await login("STUDENT");
+    const saved = await request("/api/saved/toggle", json("POST", { eventId }, student));
+    assert.equal(saved.status, 200);
+    const schedule = await request("/api/saved", { headers: { Cookie: student } });
+    assert.equal(schedule.status, 200);
+    const joined = (await schedule.json()).events.find(({ id }) => id === eventId);
+    assert.ok(joined.organizer.name);
+    assert.ok(joined.organizer.email);
+    assert.ok(joined.verifiedBy.name);
+    await database.event.update({ where: { id: eventId }, data: { verifiedById: null } });
+    const withoutReviewer = await request("/api/saved", { headers: { Cookie: student } });
+    assert.equal(withoutReviewer.status, 200);
+    assert.equal((await withoutReviewer.json()).events.find(({ id }) => id === eventId).verifiedBy, null);
   } finally {
     socket?.close();
     if (eventId) await database.event.delete({ where: { id: eventId } });

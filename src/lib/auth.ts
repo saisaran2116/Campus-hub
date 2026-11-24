@@ -8,44 +8,7 @@ function getJwtSecret(): string {
   return secret;
 }
 
-/**
- * Validates whether a URL is a safe HTTP/HTTPS URL or allowed internal path.
- * Disallows javascript:, data:text/html, vbscript:, etc.
- */
-export function isValidSafeUrl(urlStr: string | null | undefined): boolean {
-  if (!urlStr || typeof urlStr !== "string") return false;
-  const trimmed = urlStr.trim();
-  if (trimmed === "" || trimmed === "Not specified" || trimmed === "Needs verification") return true;
-
-  const lower = trimmed.toLowerCase();
-  if (
-    lower.startsWith("javascript:") ||
-    lower.startsWith("data:text") ||
-    lower.startsWith("vbscript:")
-  ) {
-    return false;
-  }
-
-  try {
-    const parsed = new URL(trimmed);
-    return parsed.protocol === "http:" || parsed.protocol === "https:";
-  } catch {
-    // Allow root-relative paths e.g. /posters/...
-    return trimmed.startsWith("/");
-  }
-}
-
-/**
- * Returns a sanitized URL or a safe fallback if the input is dangerous or invalid.
- */
-export function sanitizeUrl(urlStr: string | null | undefined, fallback: string = "Not specified"): string {
-  if (!urlStr || typeof urlStr !== "string") return fallback;
-  const trimmed = urlStr.trim();
-  if (!isValidSafeUrl(trimmed)) {
-    return fallback;
-  }
-  return trimmed;
-}
+export { isValidSafeUrl, sanitizeUrl } from "./input-sanitization";
 
 export interface TokenPayload {
   userId: string;

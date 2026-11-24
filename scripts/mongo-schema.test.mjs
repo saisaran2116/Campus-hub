@@ -26,6 +26,13 @@ test("MongoDB enforces the production document schema on inserts and updates", {
       content: { title: "Workshop", notes: "" }, updatedAt: new Date(),
     };
     await collection.insertOne(draft);
+    // Embedding vs referencing and indexing use the same fields as the API.
+    await collection.createIndex({ organizerId: 1, updatedAt: -1 });
+    const ownDrafts = await collection.find({ organizerId: "schema-test" })
+      .sort({ updatedAt: -1 }).hint({ organizerId: 1, updatedAt: -1 }).toArray();
+    assert.equal(ownDrafts[0].content.title, "Workshop");
+    assert.equal(ownDrafts[0].organizerId, "schema-test");
+    assert.equal(await collection.countDocuments({ organizerId: "another-organizer" }), 0);
     await assert.rejects(collection.insertOne({
       ...draft, _id: new ObjectId(), updatedAt: "invalid date",
     }), { code: 121 });

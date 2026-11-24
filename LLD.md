@@ -97,3 +97,37 @@ The query binds the authenticated user ID through Prisma's tagged SQL template. 
 Run `npm run typecheck` and `npm test` for TypeScript checks and the scheduling, event-loop, poster-reading, and draft-input tests. Run `node --env-file=.env --test scripts/mongo-schema.test.mjs` to include live MongoDB enforcement checks.
 
 Runtime acceptance checks include uploading a valid and invalid poster, changing search filters rapidly, navigating away during an assistant response, creating and editing a draft, and loading a saved schedule with both verified and unverified events. These need the corresponding running services. Source references and unit tests do not establish that every live database flow has been executed.
+
+## Additional concepts from the coverage review
+
+### MongoDB embedding vs referencing relationships
+
+EventDraft embeds title and notes in `content` because the draft editor reads and updates them together. It references the owner using `organizerId` because authentication and user records belong to PostgreSQL. API handlers derive the owner filter from the verified session, keeping drafts private across organizers. The MongoDB schema cannot enforce a foreign key into PostgreSQL.
+
+### MongoDB indexing for query performance
+
+`openDrafts` in [src/lib/drafts.ts](src/lib/drafts.ts) creates the compound index `{ organizerId: 1, updatedAt: -1 }`. The list pipeline first matches the authenticated owner, then sorts their drafts by updatedAt descending. The leading equality field and trailing sort field align with that access pattern. [scripts/mongo-schema.test.mjs](scripts/mongo-schema.test.mjs) exercises an owner query with the same index using `hint` and verifies isolation from another owner.
+
+### Input sanitization and injection awareness
+
+[src/lib/input-sanitization.ts](src/lib/input-sanitization.ts) allows HTTP(S) links and local paths, rejects executable schemes, embedded controls, backslashes, protocol-relative external redirects, and credential-bearing URLs. Existing imports from auth.ts re-export these helpers so submission handlers use the same policy. React renders user text as escaped text, while Prisma query builders and tagged SQL templates bind values separately from SQL syntax. Mongo ownership filters are constructed by handlers and do not accept arbitrary client query operators.
+
+[scripts/security-cron.test.mjs](scripts/security-cron.test.mjs) checks accepted URLs and malicious input cases.
+
+### Rate limiting
+
+[src/lib/redis.ts](src/lib/redis.ts) implements per-user, per-endpoint fixed-minute quotas using Redis INCR and EXPIRE in a MULTI/EXEC transaction. Poster analysis allows eight live analyses per minute and event suggestions allow four requests per minute. Exceeded limits return HTTP 429 with Retry-After. Live AI services return HTTP 503 when their required Redis service is unavailable. Local sample-poster analysis avoids external inference and is exempt from the paid-analysis quota.
+
+[scripts/rate-limit.test.mjs](scripts/rate-limit.test.mjs) sends concurrent requests, verifies the cap and independent user buckets, and checks key expiry. It requires a live REDIS_URL.
+
+### Scheduled jobs / cron
+
+[scripts/catalogue-cron.mjs](scripts/catalogue-cron.mjs) registers `0 0 * * *` in the configured campus time zone with overlapping runs disabled. The running [catalogue worker](scripts/catalogue-live.mjs) calls this scheduler to notify connected browsers at midnight, so date-filtered catalogues refresh across a day boundary. The worker destroys the task and closes its connections during shutdown.
+
+The scheduler test asserts that the next run is campus midnight and invokes the registered task to verify the refresh callback. Start the worker with `npm run dev:live` alongside the app and Redis.
+
+### Server-side rendering
+
+[src/app/page.tsx](src/app/page.tsx) exports an async Server Component with `dynamic = "force-dynamic"`. It awaits `getUpcomingEvents()` on the server and includes event cards in the HTML response. Database credentials and SQL execution remain server-side. A failed query renders a temporary-unavailability message.
+
+[scripts/test-http.mjs](scripts/test-http.mjs) strips script elements before asserting homepage markup and checks for rendered event headings when upcoming events exist. This distinguishes HTML content from serialized client hydration data.

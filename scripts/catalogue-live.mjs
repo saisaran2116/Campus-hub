@@ -1,7 +1,7 @@
 import { createServer } from "node:http";
 import { createClient } from "redis";
 import { WebSocket, WebSocketServer } from "ws";
-import { schedule } from "node-cron";
+import { scheduleCatalogueRollover } from "./catalogue-cron.mjs";
 
 const origin = new URL(process.env.NEXT_PUBLIC_APP_URL ?? "http://127.0.0.1:3005").origin;
 const port = Number(process.env.CATALOGUE_LIVE_PORT ?? 3006);
@@ -31,9 +31,7 @@ await redis.connect();
 await redis.subscribe("campus:catalogue-changed", publishRefresh);
 
 // Re-evaluate date filters at the campus's local day boundary.
-const rollover = schedule("0 0 * * *", publishRefresh, {
-  timezone: process.env.CAMPUS_TIME_ZONE ?? "Asia/Kolkata",
-});
+const rollover = scheduleCatalogueRollover(publishRefresh, process.env.CAMPUS_TIME_ZONE ?? "Asia/Kolkata");
 server.listen(port, "127.0.0.1", () => console.log(`Catalogue socket listening on port ${port}`));
 
 for (const signal of ["SIGINT", "SIGTERM"]) process.once(signal, async () => {
