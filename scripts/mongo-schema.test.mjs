@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { MongoClient, ObjectId } from "mongodb";
-import { draftInput, draftValidator } from "../src/lib/drafts.ts";
+import { draftInput, draftValidator } from "../src/lib/event-draft.model.ts";
 
 test("Mongo schema boundary validates and normalizes draft content", () => {
   assert.deepEqual(draftInput.parse({ title: " Workshop ", notes: " Notes " }), {

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { getSavedEvents } from "@/lib/saved-events";
 import { requireAuth } from "@/lib/auth";
 import { isStartingSoon, getEventDateCategory, getHumanCountdown } from "@/lib/time";
 import { checkTwoEventsClash, parseTimeToMinutes } from "@/lib/clash";
@@ -13,25 +13,7 @@ export async function GET(req: NextRequest) {
 
     const { user } = authResult;
 
-    // Fetch student's saved events
-    const savedRecords = await prisma.savedEvent.findMany({
-      where: { userId: user.userId },
-      include: {
-        event: {
-          include: {
-            organizer: {
-              select: { name: true, email: true },
-            },
-            verifiedBy: {
-              select: { name: true },
-            },
-          },
-        },
-      },
-      orderBy: { event: { date: "asc" } },
-    });
-
-    const events = savedRecords.map((r) => r.event);
+    const events = await getSavedEvents(user.userId);
 
     // Compute pairwise clashes inside student's saved list
     const conflicts: Array<{

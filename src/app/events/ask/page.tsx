@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useRef, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 
 export default function EventAssistantPage() {
   const [question, setQuestion] = useState("");
@@ -10,8 +10,14 @@ export default function EventAssistantPage() {
   const [loading, setLoading] = useState(false);
   const controller = useRef<AbortController | null>(null);
 
+  // Side effects with useEffect: stop network/stream work when leaving this page.
+  useEffect(() => {
+    return () => controller.current?.abort();
+  }, []);
+
   async function ask(event: FormEvent) {
     event.preventDefault();
+    controller.current?.abort();
     const request = new AbortController();
     controller.current = request;
     setLoading(true);
@@ -33,12 +39,15 @@ export default function EventAssistantPage() {
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
-        setAnswer((current) => current + value);
+        if (!request.signal.aborted) setAnswer((current) => current + value);
       }
     } catch (failure) {
       if (!request.signal.aborted) setError(failure instanceof Error ? failure.message : "Unable to load suggestions.");
     } finally {
-      setLoading(false);
+      if (controller.current === request) {
+        controller.current = null;
+        if (!request.signal.aborted) setLoading(false);
+      }
     }
   }
 
@@ -53,7 +62,10 @@ export default function EventAssistantPage() {
           value={question} onChange={(event) => setQuestion(event.target.value)} />
         <div className="flex gap-3">
           <button className="btn site-primary" disabled={loading}>Find events</button>
-          {loading && <button type="button" className="btn site-secondary" onClick={() => controller.current?.abort()}>Stop</button>}
+          {loading && <button type="button" className="btn site-secondary" onClick={() => {
+            controller.current?.abort();
+            setLoading(false);
+          }}>Stop</button>}
         </div>
       </form>
       {loading && <p role="status" className="mt-6 text-sm">Finding events…</p>}
